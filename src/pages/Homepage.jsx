@@ -29,11 +29,15 @@ function Homepage({ details, profile }) {
   };
 
   useEffect(() => {
+    // Only trigger if specifically requested via navigation state
     if (location.state?.openAnnouncement) {
       setAnnounceTrigger(prev => prev + 1);
-      // Clear the state so it doesn't trigger on refresh if that's desired, 
-      // though typically navigation state clears on new navigation or is handled by the browser history.
-      window.history.replaceState({}, document.title);
+
+      // Clear the state using navigation to properly update history stack
+      // This prevents the announcement from reappearing on refresh or back/forward navigation
+      const state = { ...location.state };
+      delete state.openAnnouncement;
+      window.history.replaceState(state, '');
     }
   }, [location]);
 

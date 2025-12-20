@@ -166,55 +166,55 @@ const ActivityPage = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col relative"
       style={darkModeStyles}
     >
       {/* Background with dark overlay */}
-      <div 
-        className="fixed inset-0 -z-10" 
-        style={{ 
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
           backgroundColor: 'var(--color-bg-primary)'
         }}
       />
-      
+
       {/* Header */}
-      <Navbar 
+      <Navbar
         toggleSidebar={toggleSidebar}
         name="Notifications"
       />
-      
+
       {/* Sidebar and Overlay */}
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <Overlay isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      
+
       {/* Main Content */}
-      <main 
+      <main
         className="flex-1 container mx-auto px-2 py-4 mt-16 mb-20"
         style={{ backgroundColor: 'var(--color-bg-primary)' }}
       >
-        <div 
+        <div
           className="max-w-3xl mx-auto rounded-xl shadow-lg overflow-hidden"
           style={{ backgroundColor: 'var(--color-bg-secondary)' }}
         >
           {/* Header with Zuum News Link */}
-          <div 
+          <div
             className="px-6 py-4 border-b flex items-center justify-between"
-            style={{ 
+            style={{
               backgroundColor: 'var(--color-bg-secondary)',
               borderBottomColor: 'var(--color-border)'
             }}
           >
-            <h2 
+            <h2
               className="text-xl font-bold"
               style={{ color: 'var(--color-text-primary)' }}
             >
               Notifications
             </h2>
-            <Link 
+            <Link
               to="/zuum-news"
               className="text-sm font-medium px-4 py-2 rounded-full transition duration-200"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)'
               }}
@@ -225,22 +225,22 @@ const ActivityPage = () => {
                 e.target.style.backgroundColor = 'var(--color-primary)';
               }}
             >
-              Zuum News 
+              Zuum News
             </Link>
           </div>
-          
+
           {/* Notification Content */}
           {loading ? (
-            <div 
+            <div
               className="flex justify-center items-center py-16"
               style={{ backgroundColor: 'var(--color-bg-secondary)' }}
             >
               <Spinner />
             </div>
           ) : error ? (
-            <div 
+            <div
               className="p-4 text-center"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--color-bg-secondary)',
                 color: 'var(--color-error)'
               }}
@@ -248,18 +248,18 @@ const ActivityPage = () => {
               Error: {error}
             </div>
           ) : notifications?.length === 0 ? (
-            <div 
+            <div
               className="flex flex-col items-center justify-center py-16 px-4"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--color-bg-secondary)',
                 color: 'var(--color-text-secondary)'
               }}
             >
-              <svg 
-                className="w-16 h-16 mb-4" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="w-16 h-16 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
@@ -269,9 +269,9 @@ const ActivityPage = () => {
               <p className="text-sm mt-1">We'll notify you when something happens</p>
             </div>
           ) : (
-            <div 
-              className="divide-y cursor-pointer transition-colors"
-              style={{ 
+            <div
+              className="divide-y transition-colors"
+              style={{
                 borderTopColor: 'var(--color-border)',
                 backgroundColor: 'var(--color-bg-secondary)'
               }}
@@ -282,8 +282,8 @@ const ActivityPage = () => {
                   className="flex items-center justify-between p-4 transition-colors"
                   style={{
                     borderBottomColor: 'var(--color-border)',
-                    backgroundColor: notification.read 
-                      ? 'var(--color-bg-secondary)' 
+                    backgroundColor: notification.read
+                      ? 'var(--color-bg-secondary)'
                       : 'var(--color-success-light)'
                   }}
                   onMouseEnter={(e) => {
@@ -302,7 +302,6 @@ const ActivityPage = () => {
                       e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
                     }
                   }}
-                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-center space-x-4">
                     <img
@@ -312,19 +311,19 @@ const ActivityPage = () => {
                       style={{ borderColor: 'var(--color-primary)' }}
                     />
                     <div>
-                      <h4 
+                      <h4
                         className="text-base font-semibold"
                         style={{ color: 'var(--color-text-primary)' }}
                       >
                         {notification.name}
                       </h4>
-                      <p 
+                      <p
                         className="text-sm mt-0.5"
                         style={{ color: 'var(--color-text-secondary)' }}
                       >
                         {notification.message}
                       </p>
-                      <p 
+                      <p
                         className="text-xs mt-1"
                         style={{ color: 'var(--color-text-secondary)' }}
                       >
@@ -341,7 +340,7 @@ const ActivityPage = () => {
           )}
         </div>
       </main>
-      
+
       {/* Bottom Navigation */}
       <BottomNav />
     </div>

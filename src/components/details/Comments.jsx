@@ -4,13 +4,20 @@ import { FaComment, FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import useProfile from '../../../Hooks/useProfile';
 
-const CommentModal = ({ comments: initialComments, postId }) => {
+const CommentModal = ({ comments: initialComments, postId, onOpenChange, triggerClass }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState(() =>
     Array.isArray(initialComments) ? initialComments : []
   );
   const commentsEndRef = useRef(null);
+
+  // Notify parent component about modal state changes
+  useEffect(() => {
+    if (onOpenChange) {
+      onOpenChange(isModalOpen);
+    }
+  }, [isModalOpen, onOpenChange]);
 
   const { createComment, isLoading, error } = useCreateComment();
   const { profile } = useProfile();
@@ -24,7 +31,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
           serverComment => serverComment.id === localComment.id
         )
       );
-      
+
       // Combine server data with local-only comments
       setComments([...initialComments, ...localOnlyComments]);
     }
@@ -44,7 +51,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
 
     // Generate a temporary ID for the optimistic comment
     const tempId = `temp-${Date.now()}`;
-    
+
     // Create optimistic comment object
     const tempComment = {
       id: tempId,
@@ -60,7 +67,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
     // Add comment to UI immediately
     setComments(prev => [...prev, tempComment]);
     setNewComment(''); // Clear input field
-    
+
     // Scroll to the new comment
     scrollToBottom();
 
@@ -70,9 +77,9 @@ const CommentModal = ({ comments: initialComments, postId }) => {
       // Don't do anything with the response - we want to keep our optimistic UI
     } catch (err) {
       // Mark as failed but keep it visible
-      setComments(prev => prev.map(c => 
-        c.id === tempId 
-          ? {...c, isFailed: true}
+      setComments(prev => prev.map(c =>
+        c.id === tempId
+          ? { ...c, isFailed: true }
           : c
       ));
     }
@@ -83,9 +90,9 @@ const CommentModal = ({ comments: initialComments, postId }) => {
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff/60)}m`;
-    if (diff < 86400) return `${Math.floor(diff/3600)}h`;
-    return `${Math.floor(diff/86400)}d`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
   };
 
   // Generate a safe key for React lists
@@ -102,11 +109,11 @@ const CommentModal = ({ comments: initialComments, postId }) => {
           e.stopPropagation();
           setIsModalOpen(true);
         }}
-        className="flex flex-col items-center rounded-full"
+        className={`flex flex-col items-center rounded-full ${triggerClass || ''}`}
         style={{ color: 'var(--color-text-primary)' }}
         aria-label="View comments"
       >
-        <div 
+        <div
           className="rounded-full p-2 transition-colors"
           style={{ '&:hover': { backgroundColor: 'var(--color-bg-secondary)' } }}
         >
@@ -122,7 +129,11 @@ const CommentModal = ({ comments: initialComments, postId }) => {
             <motion.div
               className="absolute inset-0"
               style={{ backgroundColor: 'var(--color-backdrop)' }}
-              onClick={() => setIsModalOpen(false)}
+
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsModalOpen(false);
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -132,7 +143,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
             {/* Modal Panel */}
             <motion.div
               className="absolute bottom-0 left-0 right-0 rounded-t-3xl overflow-hidden flex flex-col"
-              style={{ 
+              style={{
                 height: '70vh',
                 backgroundColor: 'var(--color-bg-primary)',
                 border: '1px solid var(--color-border)'
@@ -144,14 +155,14 @@ const CommentModal = ({ comments: initialComments, postId }) => {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
               {/* Header */}
-              <div 
+              <div
                 className="px-4 py-3 flex justify-between items-center"
-                style={{ 
+                style={{
                   borderBottom: '1px solid var(--color-border)',
                   backgroundColor: 'var(--color-bg-secondary)'
                 }}
               >
-                <h3 
+                <h3
                   className="font-bold text-lg"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -186,22 +197,22 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                           onError={e => e.target.src = '/default-profile.jpg'}
                         />
                         <div className="flex-1 min-w-0">
-                          <div 
+                          <div
                             className={`rounded-2xl p-3 ${comment.isFailed ? 'border border-red-300' : ''}`}
-                            style={{ 
+                            style={{
                               backgroundColor: 'var(--color-bg-secondary)',
                               borderColor: comment.isFailed ? 'var(--color-error)' : 'transparent'
                             }}
                           >
                             <div className="flex justify-between items-start">
-                              <p 
+                              <p
                                 className="font-semibold text-sm"
                                 style={{ color: 'var(--color-text-primary)' }}
                               >
                                 {comment.username}
                               </p>
                               {comment.isFailed && (
-                                <span 
+                                <span
                                   className="text-xs ml-2"
                                   style={{ color: 'var(--color-error)' }}
                                 >
@@ -209,14 +220,14 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                                 </span>
                               )}
                             </div>
-                            <p 
+                            <p
                               className="mt-1 break-words"
                               style={{ color: 'var(--color-text-primary)' }}
                             >
                               {comment.comment}
                             </p>
                           </div>
-                          <div 
+                          <div
                             className="flex items-center mt-1 ml-2 gap-4 text-xs"
                             style={{ color: 'var(--color-text-secondary)' }}
                           >
@@ -226,7 +237,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                       </motion.div>
                     ))
                   ) : (
-                    <div 
+                    <div
                       className="text-center py-10"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
@@ -238,9 +249,9 @@ const CommentModal = ({ comments: initialComments, postId }) => {
               </div>
 
               {/* Input Field */}
-              <div 
+              <div
                 className="p-3 mb-10"
-                style={{ 
+                style={{
                   borderTop: '1px solid var(--color-border)',
                   backgroundColor: 'var(--color-bg-primary)'
                 }}
@@ -273,9 +284,8 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                     <button
                       type="submit"
                       disabled={!newComment.trim() || isLoading}
-                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
-                        newComment.trim() ? 'text-[#008066]' : 'text-gray-400'
-                      }`}
+                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${newComment.trim() ? 'text-[#008066]' : 'text-gray-400'
+                        }`}
                       aria-label="Submit comment"
                     >
                       <FaPaperPlane />

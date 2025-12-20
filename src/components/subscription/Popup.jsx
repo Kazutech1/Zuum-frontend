@@ -10,7 +10,7 @@ const SubscriptionPopup = ({ onClose, details }) => {
   console.log(plan, 'subscription plan from popup component');
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       data-subscription-popup
       onClick={(e) => {
@@ -19,7 +19,7 @@ const SubscriptionPopup = ({ onClose, details }) => {
         }
       }}
     >
-      <div 
+      <div
         className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-gray-700/50 overflow-hidden"
         data-subscription-popup
       >
@@ -37,8 +37,8 @@ const SubscriptionPopup = ({ onClose, details }) => {
               </div>
               <h2 className="text-2xl font-bold text-white">Upgrade Your Experience</h2>
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
               data-close-popup
             >
@@ -48,26 +48,7 @@ const SubscriptionPopup = ({ onClose, details }) => {
         </div>
 
         <div className="p-6 bg-gradient-to-br from-gray-900/50 to-gray-800/50">
-          {/* Price Section */}
-          <div className="bg-gradient-to-br from-gray-800/80 to-gray-700/50 p-6 rounded-xl mb-6 border border-gray-700/50">
-            <div className="flex items-end mb-2">
-              <span className="text-4xl font-bold text-white">
-                ₦{plan?.amount ? new Intl.NumberFormat('en-NG', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                }).format(parseFloat(plan.amount)) : '--,--'}
-              </span>
-              <span className="text-lg text-gray-400 ml-2">
-                /{plan?.frequency === 'annual' ? 'year' : 'month'}
-              </span>
-            </div>
-            <p className="text-gray-400 text-sm">
-              {plan?.frequency === 'annual' ? 'Billed annually' : 'Billed monthly'}, cancel anytime
-            </p>
-            <p className="text-sm font-medium text-[#34A085] mt-2">
-              Special {plan?.name || 'member'} pricing
-            </p>
-          </div>
+
 
           {/* Features List */}
           <ul className="space-y-3 mb-6">
@@ -114,9 +95,7 @@ const SubscriptionPopup = ({ onClose, details }) => {
             Get {plan?.name ? `${plan.name} ` : ''}Premium
           </button>
 
-          <p className="text-xs text-gray-500 mt-4 text-center">
-            Secure payment processing. Cancel anytime.
-          </p>
+
         </div>
       </div>
     </div>

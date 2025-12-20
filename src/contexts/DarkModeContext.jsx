@@ -12,20 +12,19 @@ export const useDarkMode = () => {
 
 export const DarkModeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage first, then system preference
+    // Check localStorage first, then default to true (Dark Mode)
     const saved = localStorage.getItem('darkMode');
     console.log('Initial dark mode check - localStorage:', saved);
-    
+
     if (saved !== null) {
       const parsed = JSON.parse(saved);
       console.log('Using saved preference:', parsed);
       return parsed;
     }
-    
-    // Check system preference
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    console.log('Using system preference:', systemPrefersDark);
-    return systemPrefersDark;
+
+    // Default to true (Dark Mode)
+    console.log('Using default: true (Dark Mode)');
+    return true;
   });
 
   const toggleDarkMode = () => {
@@ -44,7 +43,7 @@ export const DarkModeProvider = ({ children }) => {
   // Save to localStorage whenever dark mode changes
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    
+
     // Apply dark mode class to document
     if (isDarkMode) {
       document.documentElement.classList.add('dark');

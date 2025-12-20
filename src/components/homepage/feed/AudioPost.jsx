@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  FaMusic, 
-  FaLock, 
-  FaShoppingCart, 
-  FaHeart, 
-  FaComment, 
+import {
+  FaMusic,
+  FaLock,
+  FaShoppingCart,
+  FaHeart,
+  FaComment,
   FaShareAlt,
   FaBroadcastTower,
-  FaShare
+  FaShare,
+  FaTrash
 } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
 import a from "../../../assets/icons/Mask group1.svg";
@@ -20,14 +21,14 @@ import ShareModal from "../../details/Share";
 import CommentModal from "../../details/Comments";
 import StreamingPlatformsModal from "../../details/Streams";
 import useProfile from "../../../../Hooks/useProfile";
-import useAudioPosts from "../../../../Hooks/audioPosts/useCreateAudio";
+import useAudioPosts, { useDeleteAudioPost } from "../../../../Hooks/audioPosts/useCreateAudio";
 import { Share, Share2 } from "lucide-react";
 
-const AudioPost = React.forwardRef(({ 
-  post, 
+const AudioPost = React.forwardRef(({
+  post,
   profile,
-  isActive, 
-  onTap, 
+  isActive,
+  onTap,
   currentTime,
   duration,
   showTapIcon,
@@ -39,14 +40,27 @@ const AudioPost = React.forwardRef(({
   ...props
 }, ref) => {
   const navigate = useNavigate();
- 
+
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
   const { loading, error, posts } = useAudioPosts(1, 10, post.id);
   const data = posts.length > 0 ? posts[0] : null;
   const [showStreamingModal, setShowStreamingModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const isBeat = contentType === 'beat';
-  
+
+  const { deleteAudioPost, loading: isDeleting } = useDeleteAudioPost();
+
+
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+      await deleteAudioPost(post.id);
+      window.location.reload(); // Simple reload to refresh feed for now
+    }
+  };
+
 
   const handleBeatAction = (e) => {
     e.stopPropagation();
@@ -95,7 +109,7 @@ const AudioPost = React.forwardRef(({
           className="absolute inset-0 bg-cover bg-center filter blur-lg opacity-50"
           style={{ backgroundImage: `url(${post.cover_photo || c})` }}
         />
-        
+
         {/* Beat content */}
         <div className="relative z-10 w-full h-full flex flex-col items-center  justify-center p-6 text-center">
           {/* Promotional badge */}
@@ -103,7 +117,7 @@ const AudioPost = React.forwardRef(({
             <MdCampaign className="mr-1" />
             PROMOTIONAL BEAT
           </div>
-          
+
           {/* Cover art with pulse animation */}
           <div className="relative mb-8">
             <img
@@ -113,13 +127,13 @@ const AudioPost = React.forwardRef(({
             />
             <div className="absolute inset-0 rounded-lg border-4 border-transparent animate-ping opacity-20" />
           </div>
-          
+
           {/* Beat info */}
           <div className="text-center max-w-md">
             <h2 className="text-2xl font-bold text-white mb-2">{contentInfo.title}</h2>
             <p className="text-gray-300 mb-4">{contentInfo.artist}</p>
-            
-          
+
+
             {/* Price/CTA */}
             <div className="bg-black/70 backdrop-blur-sm p-4 rounded-xl border border-gray-700">
               <div className="flex items-center justify-between mb-3">
@@ -127,11 +141,11 @@ const AudioPost = React.forwardRef(({
                   <FaLock className="text-yellow-500 mr-2" />
                   <span className="text-white font-medium">This beat is locked </span>
                 </div>
-                <span className="text-green-400 font-bold text-lg"> 
-                 ₦{post.amount || '49.99'}
+                <span className="text-green-400 font-bold text-lg">
+                  ₦{post.amount || '49.99'}
                 </span>
               </div>
-              <button 
+              <button
                 // onClick={handlePurchaseClick}
                 className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-3 px-6 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity"
               >
@@ -140,10 +154,10 @@ const AudioPost = React.forwardRef(({
               </button>
             </div>
           </div>
-          
+
           {/* Audio controls for preview */}
           <div className="absolute bottom-0 left-0 right-0 px-6">
-            <AudioPlayerControls 
+            <AudioPlayerControls
               isActive={isActive}
               audioSrc={post.preview_audio || post.audio_upload}
               setAudioRef={setAudioRef}
@@ -161,9 +175,9 @@ const AudioPost = React.forwardRef(({
             </p>
           </div>
         </div>
-        
-      
-        
+
+
+
         {/* Share Modal */}
         <ShareModal
           isOpen={isShareModalOpen}
@@ -190,7 +204,7 @@ const AudioPost = React.forwardRef(({
         style={{ backgroundImage: `url(${post.cover_photo || c})` }}
       />
       <div className="absolute inset-0 bg-black/30" />
-      
+
       {/* Main content */}
       <div className="relative z-10 w-full h-full">
         {/* Top bar */}
@@ -211,7 +225,7 @@ const AudioPost = React.forwardRef(({
             onClick={(e) => e.stopPropagation()}
           /> */}
         </div>
-        
+
         {/* Cover image - fills entire space */}
         <div className="w-full h-full flex items-center justify-center px-5">
           <img
@@ -220,17 +234,17 @@ const AudioPost = React.forwardRef(({
             className="w-full h-full object-contain rounded-lg"
           />
         </div>
-        
+
         {/* Bottom actions */}
         <div className="absolute bottom-32 sm:bottom-36 left-0 right-0 p-4 z-10 flex justify-between items-end">
           <div className="flex-1 flex items-center space-x-3">
-            <div 
+            <div
               className="flex items-center space-x-3 flex-1"
               onClick={(e) => {
                 e.stopPropagation();
                 if (profile?.id) {
                   navigate(`/profile/${post.profile_id}`);
-                } 
+                }
               }}
             >
               <img
@@ -244,30 +258,53 @@ const AudioPost = React.forwardRef(({
               </div>
             </div>
           </div>
-          
+
           {/* Redesigned Side Actions Container */}
           <div className="flex flex-col items-center space-y-6 sm:space-y-8 ml-4">
             {/* Like/Reaction Button */}
             <div className="flex flex-col items-center group">
-              <ReactionButton
-                postId={post?.id}
-                reactions={data?.reactions || []}
-                profileId={profile?.id}
-              />
+              <div className="relative">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200 hover:scale-110 group-hover:shadow-lg">
+                  <ReactionButton
+                    postId={post?.id}
+                    reactions={data?.reactions || []}
+                    profileId={profile?.id}
+                    customClass="text-white text-lg sm:text-xl"
+                  />
+                </div>
+                {/* Reaction label */}
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
+                    Like
+                  </span>
+                </div>
+              </div>
             </div>
-            
+
             {/* Comment Button */}
             <div className="flex flex-col items-center group">
-              <CommentModal 
-                comments={data?.comments || []} 
-                postId={post?.id} 
-              />
+              <div className="relative">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200 hover:scale-110 group-hover:shadow-lg">
+                  <CommentModal
+                    comments={data?.comments || []}
+                    postId={post?.id}
+                    onOpenChange={setIsCommentOpen}
+                    triggerClass="h-full w-full flex items-center justify-center text-white text-lg sm:text-xl"
+                  />
+                </div>
+                {/* Comment label */}
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
+                    Comment
+                  </span>
+                </div>
+              </div>
             </div>
-            
+
             {/* Streaming Button */}
             <div className="flex flex-col items-center group">
               <div className="relative">
-                <button 
+                <button
                   onClick={toggleStreamingModal}
                   className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-200 hover:scale-110 group-hover:shadow-lg border border-white/20"
                 >
@@ -281,11 +318,11 @@ const AudioPost = React.forwardRef(({
                 </div>
               </div>
             </div>
-            
+
             {/* Share Button */}
             <div className="flex flex-col items-center group">
               <div className="relative">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsShareModalOpen(true);
@@ -302,23 +339,47 @@ const AudioPost = React.forwardRef(({
                 </div>
               </div>
             </div>
+
+            {/* Delete Button (Owner Only) */}
+            {/* Delete Button (Owner Only) */}
+            {(profile?.id === post.profile_id || profile?.id === Number(post.profile_id)) && (
+              <div className="flex flex-col items-center group">
+                <div className="relative">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-red-500/20 transition-all duration-200 hover:scale-110 group-hover:shadow-lg"
+                  >
+                    <FaTrash className={`text-white text-lg sm:text-xl ${isDeleting ? 'opacity-50' : ''}`} />
+                  </button>
+                  {/* Delete label */}
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* Audio player controls */}
-      <AudioPlayerControls 
-        isActive={isActive}
-        audioSrc={post.audio_upload}
-        setAudioRef={setAudioRef}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        currentTime={currentTime}
-        duration={duration}
-        showTapIcon={showTapIcon}
-        tapIconType={tapIconType}
-        onClick={e => e.stopPropagation()}
-      />
+      {!isCommentOpen && (
+        <AudioPlayerControls
+          isActive={isActive}
+          audioSrc={post.audio_upload}
+          setAudioRef={setAudioRef}
+          onTimeUpdate={onTimeUpdate}
+          onLoadedMetadata={onLoadedMetadata}
+          currentTime={currentTime}
+          duration={duration}
+          showTapIcon={showTapIcon}
+          tapIconType={tapIconType}
+          onClick={e => e.stopPropagation()}
+        />
+      )}
 
       {/* Modals */}
       <ShareModal

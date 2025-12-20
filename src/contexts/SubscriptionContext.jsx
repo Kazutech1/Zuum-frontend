@@ -9,7 +9,7 @@ export const SubscriptionProvider = ({ children }) => {
   const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [isSubscribed, setIsSubscribed] = useState(null); // null = not checked yet
   const [showPopup, setShowPopup] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState(null);
@@ -35,17 +35,17 @@ export const SubscriptionProvider = ({ children }) => {
     });
 
     // Check various possible subscription fields in profile
-    // User is subscribed ONLY if subscription_status is explicitly 'active'
+    // User is subscribed ONLY if subscription_status is explicitly 'active' or 'completed'
     // If subscription_status is null, undefined, 'inactive', or any other value, user is NOT subscribed
     const hasSubscription = Boolean(
-      profile.subscription_status === 'active' ||
-      profile.subscriptionStatus === 'active' ||
+      profile.subscription_status === 'active' || profile.subscription_status === 'completed' ||
+      profile.subscriptionStatus === 'active' || profile.subscriptionStatus === 'completed' ||
       profile.is_subscribed === true ||
       profile.isSubscribed === true ||
       (profile.subscription_plan_id !== null && profile.subscription_plan_id !== undefined && profile.subscription_plan_id !== '') ||
       (profile.subscriptionPlanId !== null && profile.subscriptionPlanId !== undefined && profile.subscriptionPlanId !== '') ||
       (profile.subscription !== null && profile.subscription !== undefined) ||
-      (profile.subscription && profile.subscription.status === 'active')
+      (profile.subscription && (profile.subscription.status === 'active' || profile.subscription.status === 'completed'))
     );
 
     // Explicitly set to false if subscription_status is null or any non-active value
@@ -60,10 +60,10 @@ export const SubscriptionProvider = ({ children }) => {
 
     // Get subscription plan details if available
     if (profile.subscription || profile.subscription_plan || profile.paymentDetails) {
-      const plan = profile.subscription?.plan || 
-                   profile.subscription_plan || 
-                   profile.paymentDetails?.plan ||
-                   profile.paymentDetails;
+      const plan = profile.subscription?.plan ||
+        profile.subscription_plan ||
+        profile.paymentDetails?.plan ||
+        profile.paymentDetails;
       setSubscriptionPlan(plan);
     }
   }, [profile]);
@@ -174,7 +174,7 @@ export const SubscriptionProvider = ({ children }) => {
     <SubscriptionContext.Provider value={value}>
       {children}
       {showPopup && (
-        <SubscriptionPopup 
+        <SubscriptionPopup
           onClose={handleClosePopup}
           details={subscriptionPlan || { name: 'premium' }}
         />

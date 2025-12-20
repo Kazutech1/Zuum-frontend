@@ -57,7 +57,10 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
     if (platform.url) {
       window.open(platform.url, "_blank", "noopener,noreferrer");
     } else {
-      alert(`Share to ${platform.name} feature to be implemented`);
+      // Fallback for platforms without direct web share URL (like Instagram)
+      copyToClipboard();
+      // Optional: You could show a specialized message for Instagram
+      // active feedback is handled by copyToClipboard setting copySuccess
     }
     onClose();
   };
@@ -93,7 +96,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
               stiffness: 300
             }}
             className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden"
-            style={{ 
+            style={{
               backgroundColor: 'var(--color-bg-primary)',
               border: '1px solid var(--color-border)'
             }}
@@ -101,7 +104,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
           >
             {/* Drag handle indicator */}
             <div className="flex justify-center py-2">
-              <div 
+              <div
                 className="w-12 h-1 rounded-full"
                 style={{ backgroundColor: 'var(--color-border)' }}
               ></div>
@@ -110,7 +113,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
             <div className="p-6">
               {/* Header */}
               <div className="flex justify-between items-center mb-6">
-                <h3 
+                <h3
                   className="text-xl font-bold"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -119,7 +122,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                 <button
                   onClick={onClose}
                   className="p-2 rounded-full transition-colors"
-                  style={{ 
+                  style={{
                     backgroundColor: 'var(--color-bg-secondary)',
                     color: 'var(--color-text-secondary)'
                   }}
@@ -139,9 +142,9 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                     className="flex flex-col items-center group"
                     aria-label={`Share to ${platform.name}`}
                   >
-                    <div 
+                    <div
                       className="w-14 h-14 flex items-center justify-center rounded-xl mb-2 transition-colors"
-                      style={{ 
+                      style={{
                         backgroundColor: 'var(--color-bg-secondary)',
                         '&:hover': {
                           backgroundColor: 'var(--color-bg-tertiary)'
@@ -150,7 +153,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                     >
                       {platform.icon}
                     </div>
-                    <span 
+                    <span
                       className="text-xs font-medium"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
@@ -161,14 +164,14 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
               </div>
 
               {/* Link section */}
-              <div 
+              <div
                 className="rounded-xl p-4 mb-6"
-                style={{ 
+                style={{
                   backgroundColor: 'var(--color-bg-secondary)',
                   border: '1px solid var(--color-border)'
                 }}
               >
-                <p 
+                <p
                   className="text-sm mb-2"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
@@ -180,7 +183,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                     value={shareableLink}
                     readOnly
                     className="flex-1 px-4 py-2 text-sm truncate focus:outline-none rounded-l-lg"
-                    style={{ 
+                    style={{
                       backgroundColor: 'var(--color-bg-primary)',
                       border: '1px solid var(--color-border)',
                       color: 'var(--color-text-primary)'
@@ -189,7 +192,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                   <button
                     onClick={copyToClipboard}
                     className="px-4 py-2 rounded-r-lg text-sm font-medium transition-colors"
-                    style={{ 
+                    style={{
                       backgroundColor: 'var(--color-primary)',
                       color: 'white',
                       '&:hover': {
@@ -202,48 +205,7 @@ const ShareModal = ({ isOpen, onClose, url, title, postId }) => {
                 </div>
               </div>
 
-              {/* Direct share section */}
-              <div>
-                <h4 
-                  className="text-sm font-semibold mb-4"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  Send directly to
-                </h4>
-                <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {[1, 2, 3, 4, 5].map((user) => (
-                    <motion.button
-                      key={user}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex flex-col items-center flex-shrink-0"
-                      onClick={() => {
-                        alert(`Sharing to user ${user} functionality to be implemented`);
-                        onClose();
-                      }}
-                    >
-                      <div 
-                        className="w-12 h-12 rounded-full mb-2 overflow-hidden"
-                        style={{ 
-                          background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-primary-light))'
-                        }}
-                      >
-                        <div 
-                          className="w-full h-full flex items-center justify-center font-medium"
-                          style={{ color: 'white' }}
-                        >
-                          U{user}
-                        </div>
-                      </div>
-                      <span 
-                        className="text-xs"
-                        style={{ color: 'var(--color-text-secondary)' }}
-                      >
-                        User {user}
-                      </span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+
             </div>
           </motion.div>
         </>
