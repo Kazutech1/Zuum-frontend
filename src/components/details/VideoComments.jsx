@@ -4,7 +4,7 @@ import { FaComment, FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import useProfile from '../../../Hooks/useProfile';
 
-const CommentModal = ({ comments: initialComments, postId }) => {
+const CommentModal = ({ comments: initialComments, postId, ...props }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState(() =>
@@ -24,7 +24,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
           serverComment => serverComment.id === localComment.id
         )
       );
-      
+
       // Combine server data with local-only comments
       setComments([...initialComments, ...localOnlyComments]);
     }
@@ -44,7 +44,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
 
     // Generate a temporary ID for the optimistic comment
     const tempId = `temp-${Date.now()}`;
-    
+
     // Create optimistic comment object
     const tempComment = {
       id: tempId,
@@ -60,7 +60,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
     // Add comment to UI immediately
     setComments(prev => [...prev, tempComment]);
     setNewComment(''); // Clear input field
-    
+
     // Scroll to the new comment
     scrollToBottom();
 
@@ -70,9 +70,9 @@ const CommentModal = ({ comments: initialComments, postId }) => {
       // Don't do anything with the response - we want to keep our optimistic UI
     } catch (err) {
       // Mark as failed but keep it visible
-      setComments(prev => prev.map(c => 
-        c.id === tempId 
-          ? {...c, isFailed: true}
+      setComments(prev => prev.map(c =>
+        c.id === tempId
+          ? { ...c, isFailed: true }
           : c
       ));
     }
@@ -83,9 +83,9 @@ const CommentModal = ({ comments: initialComments, postId }) => {
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff/60)}m`;
-    if (diff < 86400) return `${Math.floor(diff/3600)}h`;
-    return `${Math.floor(diff/86400)}d`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
   };
 
   // Generate a safe key for React lists
@@ -97,27 +97,37 @@ const CommentModal = ({ comments: initialComments, postId }) => {
   return (
     <>
       {/* Comment Trigger */}
-      <button
-        onClick={e => {
+      {/* If children are provided, use them as the trigger. Otherwise use default button. */}
+      {props.children ? (
+        <div onClick={(e) => {
           e.stopPropagation();
           setIsModalOpen(true);
-        }}
-        className="flex flex-col items-center rounded-full"
-        style={{ color: 'var(--color-text-primary)' }}
-        aria-label="View comments"
-      >
-        <div 
-          className="rounded-full p-2 transition-colors"
-          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-        >
-          <FaComment className="text-xl" />
+        }}>
+          {props.children}
         </div>
-        <span className="text-sm">{comments.length}</span>
-      </button>
+      ) : (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            setIsModalOpen(true);
+          }}
+          className="flex flex-col items-center rounded-full"
+          style={{ color: 'var(--color-text-primary)' }}
+          aria-label="View comments"
+        >
+          <div
+            className="rounded-full p-2 transition-colors"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          >
+            <FaComment className="text-xl" />
+          </div>
+          <span className="text-sm">{comments.length}</span>
+        </button>
+      )}
 
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-[0]">
             {/* Backdrop */}
             <motion.div
               className="absolute inset-0"
@@ -131,26 +141,28 @@ const CommentModal = ({ comments: initialComments, postId }) => {
 
             {/* Modal Panel */}
             <motion.div
-              className="absolute bottom-0 left-0 right-0 rounded-t-3xl overflow-hidden flex flex-col"
-              style={{ 
-                height: '70vh',
+              className="absolute bottom-0 left-0 right-0 rounded-t-3xl overflow-hidden flex flex-col shadow-2xl"
+              style={{
+                height: '75vh',
                 backgroundColor: 'var(--color-bg-primary)',
-                border: '1px solid var(--color-border)'
+                borderTop: '1px solid var(--color-border)',
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.2)'
               }}
               onClick={e => e.stopPropagation()} // Stop backdrop click
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             >
               {/* Header */}
-              <div 
-                className="px-4 py-3 flex justify-between items-center"
-                style={{ 
-                  borderBottom: '1px solid var(--color-border)'
+              <div
+                className="px-6 py-4 flex justify-between items-center bg-opacity-95 backdrop-blur-sm z-10"
+                style={{
+                  borderBottom: '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-bg-secondary)'
                 }}
               >
-                <h3 
+                <h3
                   className="font-bold text-lg"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -158,7 +170,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2"
+                  className="p-2 rounded-full hover:bg-black/5 transition-colors"
                   style={{ color: 'var(--color-text-secondary)' }}
                   aria-label="Close comments"
                 >
@@ -167,8 +179,8 @@ const CommentModal = ({ comments: initialComments, postId }) => {
               </div>
 
               {/* Comments List */}
-              <div className="flex-1 overflow-y-auto px-4">
-                <div className="space-y-4 py-2">
+              <div className="flex-1 overflow-y-auto px-4 touch-pan-y overscroll-contain">
+                <div className="space-y-5 py-4">
                   {comments.length ? (
                     comments.map((comment, index) => (
                       <motion.div
@@ -176,60 +188,58 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="flex gap-3"
+                        className="flex gap-3 items-start"
                       >
                         <img
                           src={comment.profile_picture}
                           alt="Profile"
-                          className="w-10 h-10 rounded-full object-cover"
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-100 dark:border-gray-800"
                           onError={e => e.target.src = '/default-profile.jpg'}
                         />
                         <div className="flex-1 min-w-0">
-                          <div 
-                            className={`rounded-2xl p-3 ${comment.isFailed ? 'border border-red-300' : ''}`}
-                            style={{ 
+                          <div
+                            className={`rounded-2xl px-4 py-3 ${comment.isFailed ? 'border border-red-300' : ''}`}
+                            style={{
                               backgroundColor: 'var(--color-bg-secondary)',
                               borderColor: comment.isFailed ? 'var(--color-error)' : 'transparent'
                             }}
                           >
-                            <div className="flex justify-between items-start">
-                              <p 
-                                className="font-semibold text-sm"
+                            <div className="flex justify-between items-start mb-1">
+                              <p
+                                className="font-bold text-sm"
                                 style={{ color: 'var(--color-text-primary)' }}
                               >
                                 {comment.username}
                               </p>
-                              {comment.isFailed && (
-                                <span 
-                                  className="text-xs ml-2"
-                                  style={{ color: 'var(--color-error)' }}
-                                >
-                                  Failed to send
-                                </span>
-                              )}
+                              <span
+                                className="text-[10px]"
+                                style={{ color: 'var(--color-text-secondary)' }}
+                              >
+                                {formatDate(comment.created_at)}
+                              </span>
                             </div>
-                            <p 
-                              className="mt-1 break-words"
+                            <p
+                              className="text-sm leading-relaxed whitespace-pre-wrap break-words"
                               style={{ color: 'var(--color-text-primary)' }}
                             >
                               {comment.comment}
                             </p>
                           </div>
-                          <div 
-                            className="flex items-center mt-1 ml-2 gap-4 text-xs"
-                            style={{ color: 'var(--color-text-secondary)' }}
-                          >
-                            <span>{formatDate(comment.created_at)}</span>
-                          </div>
+
+                          {comment.isFailed && (
+                            <p className="text-xs mt-1 ml-2 text-red-500">Failed to send</p>
+                          )}
                         </div>
                       </motion.div>
                     ))
                   ) : (
-                    <div 
-                      className="text-center py-10"
+                    <div
+                      className="flex flex-col items-center justify-center py-20 opacity-60"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
-                      No comments yet. Be the first to comment!
+                      <FaComment className="text-4xl mb-3 opacity-20" />
+                      <p>No comments yet.</p>
+                      <p className="text-sm">Be the first to share your thoughts!</p>
                     </div>
                   )}
                   <div ref={commentsEndRef} />
@@ -237,18 +247,18 @@ const CommentModal = ({ comments: initialComments, postId }) => {
               </div>
 
               {/* Input Field */}
-              <div 
-                className="p-3 mb-10"
-                style={{ 
+              <div
+                className="p-4 mb-13 safe-area-bottom"
+                style={{
                   borderTop: '1px solid var(--color-border)',
                   backgroundColor: 'var(--color-bg-primary)'
                 }}
               >
-                <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
+                <form onSubmit={handleSubmitComment} className="flex items-end gap-3">
                   <img
                     src={profile?.image || '/default-profile.jpg'}
-                    alt="Your profile"
-                    className="w-10 h-10 rounded-full object-cover"
+                    alt="Current profile"
+                    className="w-9 h-9 rounded-full object-cover mb-1 border border-gray-100 dark:border-gray-800"
                     onError={e => e.target.src = '/default-profile.jpg'}
                   />
                   <div className="flex-1 relative">
@@ -257,12 +267,11 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                       value={newComment}
                       onChange={e => setNewComment(e.target.value)}
                       placeholder="Add a comment..."
-                      className="w-full py-2 px-4 rounded-full focus:outline-none focus:ring-2"
+                      className="w-full py-3 pl-5 pr-12 rounded-full text-sm transition-shadow"
                       style={{
                         backgroundColor: 'var(--color-bg-secondary)',
                         color: 'var(--color-text-primary)',
-                        border: '1px solid var(--color-border)',
-                        focusRingColor: 'var(--color-primary)'
+                        border: '1px solid transparent',
                       }}
                       disabled={isLoading}
                       aria-label="Comment input"
@@ -270,12 +279,13 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                     <button
                       type="submit"
                       disabled={!newComment.trim() || isLoading}
-                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
-                        newComment.trim() ? 'text-[#008066]' : 'text-gray-400'
-                      }`}
+                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-all ${newComment.trim()
+                        ? 'text-white bg-[#008066] hover:bg-[#006652] scale-100'
+                        : 'text-gray-400 scale-90 opacity-0 pointer-events-none'
+                        }`}
                       aria-label="Submit comment"
                     >
-                      <FaPaperPlane />
+                      <FaPaperPlane className="text-xs" />
                     </button>
                   </div>
                 </form>
@@ -283,7 +293,7 @@ const CommentModal = ({ comments: initialComments, postId }) => {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="text-sm mt-2 text-center"
+                    className="text-xs mt-2 ml-12"
                     style={{ color: 'var(--color-error)' }}
                   >
                     {error}

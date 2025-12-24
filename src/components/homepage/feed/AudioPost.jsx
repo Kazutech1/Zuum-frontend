@@ -284,18 +284,20 @@ const AudioPost = React.forwardRef(({
             {/* Comment Button */}
             <div className="flex flex-col items-center group">
               <div className="relative">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200 hover:scale-110 group-hover:shadow-lg">
-                  <CommentModal
-                    comments={data?.comments || []}
-                    postId={post?.id}
-                    onOpenChange={setIsCommentOpen}
-                    triggerClass="h-full w-full flex items-center justify-center text-white text-lg sm:text-xl"
-                  />
-                </div>
+                <CommentModal
+                  comments={data?.comments || []}
+                  postId={post?.id}
+                  onOpenChange={setIsCommentOpen}
+                >
+                  <button className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200 hover:scale-110 group-hover:shadow-lg">
+                    <FaComment className="text-white text-lg sm:text-xl" />
+                  </button>
+                </CommentModal>
+
                 {/* Comment label */}
-                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                   <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
-                    Comment
+                    {data?.comments?.length || 0}
                   </span>
                 </div>
               </div>
