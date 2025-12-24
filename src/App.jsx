@@ -54,6 +54,7 @@ import { AdminProvider } from './contexts/AdminContexts';
 import AdminProtectedRoute from './contexts/AdminProtectedRoutes';
 import PromotionPlatforms from './pages/upload/GlobalPromotion';
 import VideoViewerPage from './components/homepage/sale/ViewVideo';
+import ViewAudio from './components/homepage/sale/ViewAudio';
 import PromotionRequirementsForm from './components/upload/Globalreq';
 import { UserPromotions } from './pages/UserPromotions';
 import DistributionRequestsPage from './admin/pages/Distribution';
@@ -231,6 +232,7 @@ const AppRoutes = () => {
         <Route path="/global" element={<PromotionPlatforms />} />
         <Route path="/req" element={<PromotionRequirementsForm />} />
         <Route path="/shared-audio/:shareId" element={<SharedAudioPage />} />
+        <Route path="/view-audio/:postId" element={<ViewAudio />} />
         <Route path="/videos/:id" element={<VideoViewerPage />} />
         <Route path="/user/promotions" element={<UserPromotions />} />
         <Route path="/zuum-news" element={<ZuumNews />} />

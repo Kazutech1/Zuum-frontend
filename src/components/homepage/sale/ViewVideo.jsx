@@ -20,7 +20,7 @@ const VideoViewerPage = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  
+
   // Using the video post hook to fetch single video
   const { data: videoData, loading, error } = useGetVideoPost(id);
 
@@ -54,7 +54,7 @@ const VideoViewerPage = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-black">
         <div className="text-white text-xl mb-4">{error}</div>
-        <button 
+        <button
           className="bg-purple-600 text-white px-4 py-2 rounded-lg"
           onClick={() => navigate("/")}
         >
@@ -68,7 +68,7 @@ const VideoViewerPage = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-black">
         <div className="text-white text-xl mb-4">Video not found</div>
-        <button 
+        <button
           className="bg-purple-600 text-white px-4 py-2 rounded-lg"
           onClick={() => navigate("/")}
         >
@@ -84,7 +84,7 @@ const VideoViewerPage = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <ReactPlayer
           ref={playerRef}
-          url={videoData.video_url}
+          url={videoData.video_upload || videoData.video_url}
           playing={isPlaying}
           muted={isMuted}
           volume={volume}
@@ -101,19 +101,19 @@ const VideoViewerPage = () => {
             },
           }}
         />
-        
+
         {/* Play/Pause overlay */}
         {!isPlaying && (
-          <div 
+          <div
             className="absolute inset-0 z-10 flex items-center justify-center"
             onClick={handlePlayPause}
           >
             <div className="bg-black/50 rounded-full p-4">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-12 w-12 text-white" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -123,18 +123,18 @@ const VideoViewerPage = () => {
           </div>
         )}
       </div>
-      
+
       {/* Header */}
       <div className="absolute top-8 sm:top-12 left-0 right-0 p-4 z-20 flex justify-between items-center">
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="bg-black/50 p-2 rounded-full"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        
+
         {/* Volume control */}
         <div className="flex items-center space-x-2">
           <button onClick={toggleMute} className="text-white">
@@ -160,7 +160,7 @@ const VideoViewerPage = () => {
           />
         </div>
       </div>
-      
+
       {/* Right side actions */}
       <div className="absolute right-4 bottom-28 z-20 flex flex-col items-center space-y-6">
         {/* Profile picture */}
@@ -176,31 +176,31 @@ const VideoViewerPage = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Reaction button */}
         <ReactionButton
           postId={videoData.id}
           reactions={videoData.reactions}
         />
-        
+
         {/* Comment button */}
-        <button 
+        <button
           onClick={() => setIsCommentModalOpen(true)}
           className="flex flex-col items-center text-white"
         >
           <FaComment className="text-2xl" />
-          <span className="text-xs">{videoData.comments?.length || 0}</span>
+          <span className="text-xs">{videoData.comments?.length || videoData.comment_count || 0}</span>
         </button>
-        
+
         {/* Share button */}
-        <button 
+        <button
           onClick={() => setIsShareModalOpen(true)}
           className="flex flex-col items-center text-white"
         >
           <FaShare className="text-2xl" />
-          <span className="text-xs">{videoData.shares || 0}</span>
+          <span className="text-xs">{videoData.shares || videoData.share_count || 0}</span>
         </button>
-        
+
         {/* Music/sound */}
         {videoData.audio && (
           <div className="rounded-full border border-white p-2 animate-spin-slow">
@@ -208,12 +208,12 @@ const VideoViewerPage = () => {
           </div>
         )}
       </div>
-      
+
       {/* Video info at bottom left */}
       <div className="absolute left-4 bottom-28 z-20 max-w-xs">
         <h3 className="text-white font-bold text-lg">{videoData.username}</h3>
         <p className="text-white text-sm">{videoData.caption}</p>
-        
+
         {/* Music/sound info */}
         {videoData.audio && (
           <div className="flex items-center mt-2">
@@ -222,17 +222,17 @@ const VideoViewerPage = () => {
           </div>
         )}
       </div>
-      
+
       {/* Comment Modal */}
       <CommentModal
         isOpen={isCommentModalOpen}
         onClose={() => setIsCommentModalOpen(false)}
-        comments={videoData.comments} 
+        comments={videoData.comments}
         postId={videoData.id}
       />
-      
-     
-      
+
+
+
       <BottomNav />
     </div>
   );

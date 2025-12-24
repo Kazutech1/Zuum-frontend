@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
   axios.defaults.baseURL = API_URL;
   axios.defaults.withCredentials = true; // Crucial for cookies
-  
+
   // Detect iOS Safari
   const isIOSSafari = () => {
     const ua = navigator.userAgent;
@@ -54,22 +54,71 @@ export const AuthProvider = ({ children }) => {
     return headers;
   };
 
+  // Cleanup interceptors on unmount
+  useEffect(() => {
+    // Add a response interceptor
+    const interceptor = axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        const originalRequest = error.config;
+
+        // Prevent infinite loops if logout endpoint itself fails
+        if (originalRequest.url?.includes('/auth/logout')) {
+          return Promise.reject(error);
+        }
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          console.debug('[AuthContext] 401 detected, triggering logout');
+
+          // Clear everything locally first
+          setProfile(null);
+          setPaymentDetails(null);
+
+          if (isIOSDevice()) {
+            localStorage.removeItem('auth_token');
+            delete axios.defaults.headers.common['Authorization'];
+            // Clear the cookie for iOS
+            const expires = new Date();
+            expires.setTime(expires.getTime() - 1000); // Past date to expire
+            document.cookie = `token=; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+          }
+
+          // Redirect to login
+          // We use window.location because we're outside Router context here for some providers, 
+          // or inside but safer to do a hard redirect to clear state completely
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   // Main authentication check - fetches profile
   const checkAuth = useCallback(async () => {
     try {
       // Debug: Show what we're sending to profile endpoint
       console.debug('[AuthContext] Checking auth - cookies:', document.cookie);
       console.debug('[AuthContext] Checking auth - localStorage token:', localStorage.getItem('auth_token'));
-      
+
       // Get token from localStorage for iOS devices
       const token = localStorage.getItem('auth_token');
-      
+
       // Set up request headers
       const headers = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       // For iOS devices, try to get token from cookie first
       if (isIOSDevice()) {
         const cookieToken = getCookie('token');
@@ -87,10 +136,10 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (err) {
       console.error('Auth check failed:', err);
-      
+
       // Debug: Show what error we got
       console.debug('[AuthContext] Auth check failed:', err);
-      
+
       // Debug: Show what we're actually sending
       console.debug('[AuthContext] Profile request details:', {
         cookies: document.cookie,
@@ -98,13 +147,13 @@ export const AuthProvider = ({ children }) => {
         axiosHeaders: axios.defaults.headers.common,
         withCredentials: axios.defaults.withCredentials
       });
-      
+
       if (isIOSDevice()) {
         // Try manual Authorization header approach
         const storedToken = localStorage.getItem('auth_token');
         if (storedToken) {
           console.debug('[AuthContext] Trying manual Authorization header with token');
-          
+
           // Try profile request with manual Authorization header
           try {
             const manualResponse = await axios.get('/user/profile', {
@@ -112,7 +161,7 @@ export const AuthProvider = ({ children }) => {
                 'Authorization': `Bearer ${storedToken}`
               }
             });
-            
+
             if (manualResponse.data) {
               console.debug('[AuthContext] Manual Authorization header worked!');
               setProfile(manualResponse.data);
@@ -123,7 +172,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       }
-      
+
       if (err.response) {
         // The request was made and the server responded with a status code
         if (err.response.status === 401) {
@@ -161,20 +210,20 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       console.debug('[AuthContext] Attempting login with email:', credentials.email);
-      
+
       // 1. Send login request
       const response = await axios.post('/auth/login', credentials);
-      
+
       // Debug: Show login response
       console.debug('[AuthContext] Login response received:', {
         status: response.status,
         hasData: !!response.data,
         dataKeys: response.data ? Object.keys(response.data) : []
       });
-      
+
       // Debug logging for production
       const debugInfo = {
         status: response.status,
@@ -185,42 +234,42 @@ export const AuthProvider = ({ children }) => {
         hasCookies: !!getCookie('token'),
         isIOS: isIOSDevice()
       };
-      
+
       console.debug('[AuthContext] Debug Info:', debugInfo);
-      
+
       // Debug cookie setting
       if (isIOSDevice() && response.data?.token) {
         console.debug('[AuthContext] Setting cookie for iOS device');
         console.debug('[AuthContext] Token to set:', response.data.token);
         console.debug('[AuthContext] Current cookies before setting:', document.cookie);
-        
+
         // Try multiple cookie setting approaches for iOS
         try {
           // Approach 1: Basic cookie
           setCookie('token', response.data.token, 7);
           console.debug('[AuthContext] Cookie set with basic approach');
-          
+
           // Approach 2: Manual cookie setting with iOS-compatible attributes
           const expires = new Date();
           expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000));
           document.cookie = `token=${response.data.token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
           console.debug('[AuthContext] Cookie set with manual approach');
-          
+
           // Approach 3: Try without SameSite for iOS
           document.cookie = `token=${response.data.token}; expires=${expires.toUTCString()}; path=/`;
           console.debug('[AuthContext] Cookie set without SameSite');
-          
+
         } catch (err) {
           console.error('[AuthContext] Error setting cookie:', err);
         }
-        
+
         console.debug('[AuthContext] Current cookies after setting:', document.cookie);
       }
-      
+
       console.debug('[AuthContext] Login response:', response);
       console.debug('[AuthContext] Response headers:', response.headers);
       console.debug('[AuthContext] Response data:', response.data);
-      
+
       // 2. Handle iOS device cookie storage
       if (isIOSDevice()) {
         console.debug('[AuthContext] iOS device detected, handling token storage');
@@ -229,9 +278,9 @@ export const AuthProvider = ({ children }) => {
         const responseToken = response.data?.token;
         const headerToken = response.headers['authorization'] || response.headers['Authorization'];
         const token = responseToken || cookieToken || headerToken?.replace('Bearer ', '');
-        
+
         console.debug('[AuthContext] Token sources - cookie:', cookieToken, 'response:', responseToken, 'header:', headerToken);
-        
+
         if (token) {
           console.debug('[AuthContext] Token found for iOS device:', token);
           // Store token in localStorage as backup for iOS devices
@@ -251,32 +300,32 @@ export const AuthProvider = ({ children }) => {
           setCookie('token', response.data.token, 7);
         }
       }
-      
+
       // 3. Check authentication status
-const authSuccess = await checkAuth();
-    if (authSuccess) {
-      return { success: true };
-    } else {
-      return { success: false, errorCode: 'auth_failed' };
-    }
+      const authSuccess = await checkAuth();
+      if (authSuccess) {
+        return { success: true };
+      } else {
+        return { success: false, errorCode: 'auth_failed' };
+      }
 
-  } catch (err) {
-    console.error('[AuthContext] Login error:', err);
+    } catch (err) {
+      console.error('[AuthContext] Login error:', err);
 
-    if (err.response) {
-      return { 
-        success: false, 
-        errorCode: err.response.status,
-        message: err.response.data?.message || ''
-      };
-    } else if (err.request) {
-      return { success: false, errorCode: 'network_error', message: 'Network error' };
-    } else {
-      return { success: false, errorCode: 'unknown_error', message: err.message };
+      if (err.response) {
+        return {
+          success: false,
+          errorCode: err.response.status,
+          message: err.response.data?.message || ''
+        };
+      } else if (err.request) {
+        return { success: false, errorCode: 'network_error', message: 'Network error' };
+      } else {
+        return { success: false, errorCode: 'unknown_error', message: err.message };
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
 
   }
 
@@ -288,13 +337,13 @@ const authSuccess = await checkAuth();
     } finally {
       setProfile(null);
       setPaymentDetails(null);
-              // Clear stored token for iOS devices
-        if (isIOSDevice()) {
-          localStorage.removeItem('auth_token');
-          delete axios.defaults.headers.common['Authorization'];
-          // Clear the cookie
-          setCookie('token', '', -1); // Expire the cookie
-        }
+      // Clear stored token for iOS devices
+      if (isIOSDevice()) {
+        localStorage.removeItem('auth_token');
+        delete axios.defaults.headers.common['Authorization'];
+        // Clear the cookie
+        setCookie('token', '', -1); // Expire the cookie
+      }
     }
   };
 
@@ -322,7 +371,7 @@ const authSuccess = await checkAuth();
         setLoading(false);
       }
     };
-    
+
     if (!initialCheckDone) {
       initAuth();
     }
