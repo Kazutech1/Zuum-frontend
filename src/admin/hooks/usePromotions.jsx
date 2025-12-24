@@ -32,11 +32,11 @@ export const usePromotions = () => {
         limit,
         offset
       };
-      
+
       if (status) {
         params.status = status;
       }
-      
+
       if (category) {
         params.category = category;
       }
@@ -60,9 +60,9 @@ export const usePromotions = () => {
             promotionsData = response.data.promotions;
           }
         }
-        
+
         setPromotions(promotionsData);
-        
+
         // Handle pagination data
         if (response.data && response.data.pagination) {
           setPagination(response.data.pagination);
@@ -97,7 +97,7 @@ export const usePromotions = () => {
       } else {
         setError('Network error - please try again');
       }
-      
+
       // If API is not available, use mock data for development
       if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
         console.log('API not available, using mock data for development');
@@ -139,7 +139,7 @@ export const usePromotions = () => {
             end_date: '2024-06-10T23:59:59Z'
           }
         ];
-        
+
         setPromotions(mockPromotions);
         setPagination({
           currentPage: 1,
@@ -179,15 +179,15 @@ export const usePromotions = () => {
 
       if (response.status === 200) {
         setUpdateSuccess(true);
-        
+
         // Update the local state to reflect the change
-        setPromotions(prev => prev.map(p => 
+        setPromotions(prev => prev.map(p =>
           p.id === promotionId ? { ...p, status } : p
         ));
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setUpdateSuccess(false), 3000);
-        
+
         return true;
       }
       return false;
@@ -238,23 +238,120 @@ export const usePromotions = () => {
   }, []);
 
   /**
+   * Update promotion price
+   */
+  const updatePromotionPrice = useCallback(async (promotionId, category, newPrice) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.patch(
+        `/admin/promotions/${promotionId}/price`,
+        {
+          category,
+          newPrice
+        },
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (response.status === 200) {
+        setUpdateSuccess(true);
+        // Update local state if the promotion is in the list
+        setPromotions(prev => prev.map(p =>
+          p.id === promotionId ? { ...p, price: newPrice } : p
+        ));
+        setTimeout(() => setUpdateSuccess(false), 3000);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      handleApiError(err);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Fetch app promotion transactions
+   */
+  const [appPromotions, setAppPromotions] = useState([]);
+
+  const fetchAppPromotions = useCallback(async (filters = {}) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.get('/admin/app-promotions', {
+        params: filters,
+        withCredentials: true
+      });
+
+      if (response.status === 200) {
+        setAppPromotions(response.data.data || []);
+        return response.data.data;
+      }
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Update app promotion status (activate/deactivate)
+   */
+  const updateAppPromotionStatus = useCallback(async (promotionId, active) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.patch(
+        `/admin/app-promotions/${promotionId}`,
+        { active },
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (response.status === 200) {
+        setUpdateSuccess(true);
+        setAppPromotions(prev => prev.map(p =>
+          p.id === promotionId ? { ...p, active } : p
+        ));
+        setTimeout(() => setUpdateSuccess(false), 3000);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      handleApiError(err);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
    * Reset any API errors
    */
   const resetError = useCallback(() => setError(null), []);
 
-  // Initial fetch when hook is first used
-  useEffect(() => {
-    fetchPromotions();
-  }, [fetchPromotions]);
-
   return {
     promotions,
+    appPromotions,
     isLoading,
     error,
     pagination,
     updateSuccess,
     fetchPromotions,
     updatePromotionStatus,
+    updatePromotionPrice,
+    fetchAppPromotions,
+    updateAppPromotionStatus,
     resetError
   };
 }; 

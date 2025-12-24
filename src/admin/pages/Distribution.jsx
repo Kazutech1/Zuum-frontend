@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  User, 
-  Eye, 
-  X, 
-  ChevronLeft, 
+import {
+  User,
+  Eye,
+  X,
+  ChevronLeft,
   ChevronRight,
   Check,
   Search,
@@ -67,11 +67,11 @@ const DistributionRequestsPage = () => {
   // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  
+
   // Modal states
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [requestToMarkRead, setRequestToMarkRead] = useState(null);
-  
+
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -152,7 +152,7 @@ const DistributionRequestsPage = () => {
       setPageSize(pagination.pageSize);
     }
   }, [pagination.pageSize, pageSize]);
-  
+
   // Filter requests based on search term
   const filteredRequests = Array.isArray(requests) ? requests.filter(request => {
     const searchLower = searchTerm.toLowerCase();
@@ -184,7 +184,7 @@ const DistributionRequestsPage = () => {
     if (targetRoute) {
       navigate(targetRoute);
     } else {
-        console.log('Unknown page:', pageId);
+      console.log('Unknown page:', pageId);
     }
   };
 
@@ -199,9 +199,8 @@ const DistributionRequestsPage = () => {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-      }`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        }`}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between mb-3">
@@ -224,7 +223,7 @@ const DistributionRequestsPage = () => {
               <Search size={22} />
             </button>
           </div>
-          
+
           {/* Mobile Search Bar */}
           {showMobileSearch && (
             <div className="mb-3">
@@ -234,7 +233,7 @@ const DistributionRequestsPage = () => {
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
                   placeholder="Search requests..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -254,7 +253,7 @@ const DistributionRequestsPage = () => {
                   <h1 className="text-3xl font-bold text-gray-900">Distribution Requests</h1>
                   <p className="mt-2 text-gray-600">Manage and review artist distribution requests</p>
                 </div>
-                
+
                 {/* Search bar */}
                 <div className="relative w-full md:w-64 lg:w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -262,7 +261,7 @@ const DistributionRequestsPage = () => {
                   </div>
                   <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
                     placeholder="Search requests..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -317,7 +316,7 @@ const DistributionRequestsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Error notification */}
             {error && (
               <div className="mx-4 lg:mx-6 mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
@@ -341,7 +340,7 @@ const DistributionRequestsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Success notification */}
             {markReadSuccess && (
               <div className="fixed top-4 right-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-lg z-50 animate-fade-in-out">
@@ -355,7 +354,7 @@ const DistributionRequestsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Main content - professional list/table layout for requests */}
             <div className="flex-1 overflow-hidden">
               <div className="h-full bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 mx-4 lg:mx-6">
@@ -508,11 +507,10 @@ const DistributionRequestsPage = () => {
                                       e.stopPropagation();
                                       handleToggleRead(request.id, request.read);
                                     }}
-                                    className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium ${
-                                      request.read
+                                    className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium ${request.read
                                         ? 'border border-blue-200 text-blue-600 bg-white hover:bg-blue-50'
                                         : 'border border-blue-600 text-white bg-blue-600 hover:bg-blue-700'
-                                    }`}
+                                      }`}
                                   >
                                     {request.read ? (
                                       <>
@@ -543,7 +541,7 @@ const DistributionRequestsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Pagination controls */}
             {totalRequests > 0 && !searchTerm && (
               <div className="px-4 lg:px-6 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-t border-gray-200 bg-white">
@@ -560,7 +558,7 @@ const DistributionRequestsPage = () => {
                   <select
                     value={effectivePageSize}
                     onChange={handlePageSizeChange}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63]"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63]"
                   >
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>
@@ -574,8 +572,8 @@ const DistributionRequestsPage = () => {
                     onClick={goToPrevPage}
                     disabled={currentPage === 1}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${currentPage === 1 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <ChevronLeft size={18} className="mr-1" />
@@ -585,8 +583,8 @@ const DistributionRequestsPage = () => {
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${currentPage === totalPages 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <span className="hidden sm:inline">Next</span>
@@ -604,14 +602,14 @@ const DistributionRequestsPage = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Confirm Status Change</h2>
-              <button 
+              <button
                 onClick={() => setIsConfirmModalOpen(false)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="flex items-center mb-6">
                 <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -622,7 +620,7 @@ const DistributionRequestsPage = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={() => setIsConfirmModalOpen(false)}

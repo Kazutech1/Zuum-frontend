@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  User, 
-  Eye, 
-  X, 
-  ChevronLeft, 
+import {
+  User,
+  Eye,
+  X,
+  ChevronLeft,
   ChevronRight,
   Check,
   Search,
@@ -22,13 +22,13 @@ const AdminPromotionsPage = () => {
   const navigate = useNavigate();
   // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
+
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
-  
+
   // Modal states
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -49,15 +49,15 @@ const AdminPromotionsPage = () => {
 
   // Filter promotions based on search term and filters
   const filteredPromotions = Array.isArray(promotions) ? promotions.filter(promotion => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       promotion.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       promotion.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       promotion.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       promotion.id?.toString().includes(searchTerm);
-    
+
     const matchesStatusFilter = statusFilter === 'all' || promotion.status === statusFilter;
     const matchesCategoryFilter = categoryFilter === 'all' || promotion.category === categoryFilter;
-    
+
     return matchesSearch && matchesStatusFilter && matchesCategoryFilter;
   }) : [];
 
@@ -127,12 +127,12 @@ const AdminPromotionsPage = () => {
 
   // Status and category options
   const statusOptions = [
-    'all', 'active', 'pending', 'expired', 'deleted', 'success', 'failed', 
+    'all', 'active', 'pending', 'expired', 'deleted', 'success', 'failed',
     'cancelled', 'completed', 'incomplete', 'incomplete_expired', 'incomplete_cancelled'
   ];
 
   const categoryOptions = [
-    'all', 'national', 'international', 'tv', 'radio', 'chart', 
+    'all', 'national', 'international', 'tv', 'radio', 'chart',
     'digital', 'playlist', 'tiktok', 'youtube'
   ];
 
@@ -159,7 +159,7 @@ const AdminPromotionsPage = () => {
     if (targetRoute) {
       navigate(targetRoute);
     } else {
-        console.log('Unknown page:', pageId);
+      console.log('Unknown page:', pageId);
     }
   };
 
@@ -174,9 +174,8 @@ const AdminPromotionsPage = () => {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-      }`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        }`}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between mb-3">
@@ -199,7 +198,7 @@ const AdminPromotionsPage = () => {
               <Search size={22} />
             </button>
           </div>
-          
+
           {/* Mobile Search Bar */}
           {showMobileSearch && (
             <div className="mb-3">
@@ -209,7 +208,7 @@ const AdminPromotionsPage = () => {
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
                   placeholder="Search promotions..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -224,7 +223,7 @@ const AdminPromotionsPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -234,7 +233,7 @@ const AdminPromotionsPage = () => {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
             >
               <option value="all">All Categories</option>
               <option value="national">National</option>
@@ -255,7 +254,7 @@ const AdminPromotionsPage = () => {
                   <h1 className="text-3xl font-bold text-gray-900">Promotion Management</h1>
                   <p className="mt-2 text-gray-600">Manage promotional campaigns and their statuses</p>
                 </div>
-                
+
                 {/* Search bar and filters */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative w-full sm:w-64">
@@ -264,27 +263,27 @@ const AdminPromotionsPage = () => {
                     </div>
                     <input
                       type="text"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
                       placeholder="Search promotions..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  
+
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
+                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
                   >
                     {statusOptions.filter(s => s !== 'all').map(status => (
                       <option key={status} value={status}>{status?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || status}</option>
                     ))}
                   </select>
-                  
+
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
+                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
                   >
                     {categoryOptions.map(category => (
                       <option key={category} value={category}>{category === 'all' ? 'All Categories' : category.replace(/\b\w/g, c => c.toUpperCase())}</option>
@@ -340,7 +339,7 @@ const AdminPromotionsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Error notification */}
             {error && (
               <div className="mx-4 lg:mx-6 mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
@@ -364,7 +363,7 @@ const AdminPromotionsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Success notification */}
             {updateSuccess && (
               <div className="fixed top-4 right-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-lg z-50 animate-fade-in-out">
@@ -378,7 +377,7 @@ const AdminPromotionsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Main content */}
             <div className="flex-1 overflow-hidden">
               <div className="h-full bg-gray-50 shadow-sm rounded-lg overflow-hidden border border-gray-200 mx-4 lg:mx-6">
@@ -412,8 +411,8 @@ const AdminPromotionsPage = () => {
                             status === 'active'
                               ? 'bg-green-100 text-green-700'
                               : status === 'pending'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-gray-100 text-gray-700';
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-gray-100 text-gray-700';
 
                           const categoryLabel =
                             promotion.category_type ||
@@ -426,10 +425,10 @@ const AdminPromotionsPage = () => {
                           const formatPromotionDate = (value) =>
                             value
                               ? new Date(value).toLocaleDateString('en-NG', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
                               : null;
 
                           const startLabel = formatPromotionDate(startDate);
@@ -558,8 +557,8 @@ const AdminPromotionsPage = () => {
                   ) : filteredPromotions.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {filteredPromotions.map((promotion, index) => (
-                        <div 
-                          key={`${promotion.id}-${index}`} 
+                        <div
+                          key={`${promotion.id}-${index}`}
                           className="p-4 transition duration-150"
                         >
                           <div className="flex items-center justify-between mb-3">
@@ -573,16 +572,16 @@ const AdminPromotionsPage = () => {
                               </div>
                             </div>
                             <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full 
-                              ${promotion.status === 'active' 
-                                ? 'bg-green-100 text-green-800' 
+                              ${promotion.status === 'active'
+                                ? 'bg-green-100 text-green-800'
                                 : promotion.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'}`}
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'}`}
                             >
                               {promotion.status}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-2 mb-4">
                             <div className="text-sm text-black font-medium">
                               <span className="font-medium">Customer:</span> {promotion.customer_name || promotion.user_name || promotion.user?.name || 'NO CUSTOMER'}
@@ -594,20 +593,20 @@ const AdminPromotionsPage = () => {
                               <span className="font-medium">Email:</span> {promotion.customer_email || promotion.user_email || promotion.user?.email || 'NO EMAIL'}
                             </div>
                           </div>
-                          
+
                           <div className="flex space-x-3">
                             <button
                               onClick={() => handleViewPromotion(promotion)}
                               className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-[#2d7a63] text-sm font-medium rounded-lg text-[#2d7a63] bg-white hover:bg-[#245a4f] hover:text-white transition duration-150 shadow-sm"
                             >
-                              <Eye size={16} className="mr-2" /> 
+                              <Eye size={16} className="mr-2" />
                               View Details
                             </button>
                             <button
                               onClick={() => handleUpdateClick(promotion)}
                               className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition duration-150 shadow-sm"
                             >
-                              <Edit size={16} className="mr-2" /> 
+                              <Edit size={16} className="mr-2" />
                               Update Status
                             </button>
                           </div>
@@ -622,7 +621,7 @@ const AdminPromotionsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Pagination controls */}
             {promotions.length > 0 && !searchTerm && (
               <div className="px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 bg-white">
@@ -636,8 +635,8 @@ const AdminPromotionsPage = () => {
                     onClick={goToPrevPage}
                     disabled={pagination.currentPage === 1}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${pagination.currentPage === 1 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${pagination.currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <ChevronLeft size={18} className="mr-1" />
@@ -647,8 +646,8 @@ const AdminPromotionsPage = () => {
                     onClick={goToNextPage}
                     disabled={pagination.currentPage === pagination.totalPages}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${pagination.currentPage === pagination.totalPages 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${pagination.currentPage === pagination.totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <span className="hidden sm:inline">Next</span>
@@ -660,21 +659,21 @@ const AdminPromotionsPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* View Promotion Modal */}
       {isViewModalOpen && selectedPromotion && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Promotion Details</h2>
-              <button 
+              <button
                 onClick={() => setIsViewModalOpen(false)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               <div className="flex flex-col items-center mb-6">
                 <div className="h-20 w-20 bg-[#2d7a63] bg-opacity-10 rounded-full flex items-center justify-center">
@@ -682,59 +681,58 @@ const AdminPromotionsPage = () => {
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">{selectedPromotion.title}</h3>
                 <p className="mt-1 text-sm text-gray-500">by {selectedPromotion.customer_name}</p>
-                <span className={`mt-2 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  selectedPromotion.status === 'active' ? 'bg-green-100 text-green-800' :
-                  selectedPromotion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  selectedPromotion.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <span className={`mt-2 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${selectedPromotion.status === 'active' ? 'bg-green-100 text-green-800' :
+                    selectedPromotion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      selectedPromotion.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        'bg-red-100 text-red-800'
+                  }`}>
                   {selectedPromotion.status?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown'}
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Promotion ID</h4>
                   <p className="mt-1 text-sm text-black font-medium">{selectedPromotion.id}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Category</h4>
                   <p className="mt-1 text-sm text-black font-medium">{selectedPromotion.category?.replace(/\b\w/g, c => c.toUpperCase()) || 'N/A'}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</h4>
                   <p className="mt-1 text-sm text-black font-medium">{selectedPromotion.customer_name}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Email</h4>
                   <p className="mt-1 text-sm text-black font-medium">{selectedPromotion.customer_email}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</h4>
                   <p className="mt-1 text-sm text-black font-medium">${selectedPromotion.budget}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</h4>
                   <p className="mt-1 text-sm text-black font-medium">{new Date(selectedPromotion.created_at).toLocaleString()}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</h4>
                   <p className="mt-1 text-sm text-black font-medium">{new Date(selectedPromotion.start_date).toLocaleString()}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</h4>
                   <p className="mt-1 text-sm text-black font-medium">{new Date(selectedPromotion.end_date).toLocaleString()}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
                 onClick={() => setIsViewModalOpen(false)}
@@ -746,21 +744,21 @@ const AdminPromotionsPage = () => {
           </div>
         </div>
       )}
-      
+
       {/* Update Status Modal */}
       {isUpdateModalOpen && selectedPromotion && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Update Promotion Status</h2>
-              <button 
+              <button
                 onClick={() => setIsUpdateModalOpen(false)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="mb-6">
                 <div className="flex items-center mb-4">
@@ -774,7 +772,7 @@ const AdminPromotionsPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -783,14 +781,14 @@ const AdminPromotionsPage = () => {
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
                   >
                     {statusOptions.filter(s => s !== 'all').map(status => (
                       <option key={status} value={status}>{status?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || status}</option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
@@ -801,7 +799,7 @@ const AdminPromotionsPage = () => {
                       const newCategory = e.target.value;
                       setSelectedPromotion(prev => prev ? { ...prev, category: newCategory } : null);
                     }}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
                   >
                     {categoryOptions.filter(c => c !== 'all').map(category => (
                       <option key={category} value={category}>{category?.replace(/\b\w/g, c => c.toUpperCase()) || category}</option>
@@ -810,7 +808,7 @@ const AdminPromotionsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={() => setIsUpdateModalOpen(false)}
@@ -821,9 +819,8 @@ const AdminPromotionsPage = () => {
               <button
                 onClick={handleUpdateSubmit}
                 disabled={isLoading}
-                className={`px-4 py-2 bg-[#2d7a63] text-white rounded-md hover:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2d7a63] transition duration-150 ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`px-4 py-2 bg-[#2d7a63] text-white rounded-md hover:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2d7a63] transition duration-150 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {isLoading ? (
                   <span className="flex items-center">

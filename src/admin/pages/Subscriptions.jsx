@@ -217,9 +217,8 @@ const AdminSubscriptionsPage = () => {
       />
 
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-        }`}
+        className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+          }`}
       >
         {/* Mobile Header */}
         <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
@@ -265,7 +264,7 @@ const AdminSubscriptionsPage = () => {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search plans..."
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-500 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                     />
                   </div>
 
@@ -339,16 +338,16 @@ const AdminSubscriptionsPage = () => {
                     {filteredPlans.map((plan) => {
                       const formattedAmount = plan.amount
                         ? new Intl.NumberFormat('en-NG', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0,
-                          }).format(plan.amount)
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }).format(plan.amount)
                         : '0';
                       const monthlyEquivalent =
                         plan.frequency === 'annual' && plan.amount
                           ? new Intl.NumberFormat('en-NG', {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }).format(Math.round(plan.amount / 12))
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          }).format(Math.round(plan.amount / 12))
                           : null;
 
                       return (
@@ -481,7 +480,7 @@ const AdminSubscriptionsPage = () => {
                   value={planForm.name}
                   onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
                   placeholder="e.g., Premium, Basic"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -492,7 +491,7 @@ const AdminSubscriptionsPage = () => {
                 <select
                   value={planForm.frequency}
                   onChange={(e) => setPlanForm({ ...planForm, frequency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="annual">Annual</option>
@@ -508,7 +507,7 @@ const AdminSubscriptionsPage = () => {
                   value={planForm.amount}
                   onChange={(e) => setPlanForm({ ...planForm, amount: e.target.value })}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -521,7 +520,7 @@ const AdminSubscriptionsPage = () => {
                   onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
                   placeholder="Plan description..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -582,7 +581,7 @@ const AdminSubscriptionsPage = () => {
                   type="text"
                   value={planForm.name}
                   onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -593,7 +592,7 @@ const AdminSubscriptionsPage = () => {
                 <select
                   value={planForm.frequency}
                   onChange={(e) => setPlanForm({ ...planForm, frequency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="annual">Annual</option>
@@ -608,7 +607,7 @@ const AdminSubscriptionsPage = () => {
                   type="number"
                   value={planForm.amount}
                   onChange={(e) => setPlanForm({ ...planForm, amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -620,7 +619,7 @@ const AdminSubscriptionsPage = () => {
                   value={planForm.description}
                   onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                 />
               </div>
 
@@ -746,9 +745,9 @@ const AdminSubscriptionsPage = () => {
                     }}
                     onFocus={() => setShowUserDropdown(true)}
                     placeholder="Search by username, email, or ID"
-                    className="w-full pl-10 pr-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
+                    className="w-full pl-10 pr-3 py-2 border text-gray-900 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63]"
                   />
-                  
+
                   {/* User Dropdown */}
                   {showUserDropdown && userSearchTerm && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -822,9 +821,9 @@ const AdminSubscriptionsPage = () => {
                   {plans.map((plan) => {
                     const formattedAmount = plan.amount
                       ? new Intl.NumberFormat('en-NG', {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        }).format(plan.amount)
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(plan.amount)
                       : '0';
                     return (
                       <option key={plan.id} value={plan.id}>

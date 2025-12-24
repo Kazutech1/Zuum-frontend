@@ -65,9 +65,13 @@ import AdminWalletPage from './admin/pages/Wallet';
 import AdminCryptoWalletPage from './admin/pages/CryptoWallet';
 import AdminSubscriptionsPage from './admin/pages/Subscriptions';
 import AdminSettingsPage from './admin/pages/Settings';
+import AdminSubscribersPage from './admin/pages/Subscribers';
 import AdminZuumNewsPage from './admin/pages/ZuumNews';
 import BeatPostsPage from './admin/pages/BeatPosts';
 import AdminAudioPostsPage from './admin/pages/AudioPosts';
+import AdminTransactionsPage from './admin/pages/Transactions';
+import GlobalDistributionPage from './admin/pages/GlobalDistribution';
+import AdminAppPromotionsPage from './admin/pages/AppPromotions';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import ZuumOnboarding from './pages/Onboarding';
@@ -286,6 +290,10 @@ const App = () => (
                   <Route path="/admin-wallet-crypto" element={<AdminCryptoWalletPage />} />
                   <Route path="/admin-subscriptions" element={<AdminSubscriptionsPage />} />
                   <Route path="/admin-settings" element={<AdminSettingsPage />} />
+                  <Route path="/admin-subscribers" element={<AdminSubscribersPage />} />
+                  <Route path="/admin-transactions" element={<AdminTransactionsPage />} />
+                  <Route path="/admin-global-distribution" element={<GlobalDistributionPage />} />
+                  <Route path="/admin-app-promotions" element={<AdminAppPromotionsPage />} />
                   <Route path="/admin-zuum-news" element={<AdminZuumNewsPage />} />
                   <Route path="/admin-analytics/:userId" element={<AdminUserAnalyticsPage />} />
                 </Route>

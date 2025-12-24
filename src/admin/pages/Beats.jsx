@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  User, 
-  Eye, 
-  X, 
-  ChevronLeft, 
+import {
+  User,
+  Eye,
+  X,
+  ChevronLeft,
   ChevronRight,
   Check,
   Search,
@@ -23,12 +23,12 @@ const AdminBeatPurchasesPage = () => {
   const navigate = useNavigate();
   // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
+
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [emailFilter, setEmailFilter] = useState('all'); // 'all', 'sent', 'pending'
   const [showMobileSearch, setShowMobileSearch] = useState(false);
-  
+
   // Upload form states
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -117,17 +117,17 @@ const AdminBeatPurchasesPage = () => {
 
   // Filter purchases based on search term and email filter
   const filteredPurchases = Array.isArray(purchases) ? purchases.filter(purchase => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       purchase.beat_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.artist_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.id?.toString().includes(searchTerm);
-    
-    const matchesEmailFilter = emailFilter === 'all' || 
+
+    const matchesEmailFilter = emailFilter === 'all' ||
       (emailFilter === 'sent' && purchase.send_email) ||
       (emailFilter === 'pending' && !purchase.send_email);
-    
+
     return matchesSearch && matchesEmailFilter;
   }) : [];
 
@@ -150,7 +150,7 @@ const AdminBeatPurchasesPage = () => {
     if (targetRoute) {
       navigate(targetRoute);
     } else {
-        console.log('Unknown page:', pageId);
+      console.log('Unknown page:', pageId);
     }
   };
 
@@ -165,9 +165,8 @@ const AdminBeatPurchasesPage = () => {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-      }`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        }`}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between mb-3">
@@ -190,7 +189,7 @@ const AdminBeatPurchasesPage = () => {
               <Search size={22} />
             </button>
           </div>
-          
+
           {/* Mobile Search Bar */}
           {showMobileSearch && (
             <div className="mb-3">
@@ -200,7 +199,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
                   placeholder="Search purchases..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -215,7 +214,7 @@ const AdminBeatPurchasesPage = () => {
             <select
               value={emailFilter}
               onChange={(e) => setEmailFilter(e.target.value)}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
+              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition-all duration-200"
             >
               <option value="all">All Purchases</option>
               <option value="sent">Email Sent</option>
@@ -234,7 +233,7 @@ const AdminBeatPurchasesPage = () => {
                   <h1 className="text-3xl font-bold text-gray-900">Beat Purchase Management</h1>
                   <p className="mt-2 text-gray-600">Manage beat purchase licenses and email notifications</p>
                 </div>
-                
+
                 {/* Search bar and filters */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative w-full sm:w-64">
@@ -243,17 +242,17 @@ const AdminBeatPurchasesPage = () => {
                     </div>
                     <input
                       type="text"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] sm:text-sm transition duration-150 ease-in-out"
                       placeholder="Search purchases..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  
+
                   <select
                     value={emailFilter}
                     onChange={(e) => setEmailFilter(e.target.value)}
-                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
+                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] transition duration-150 ease-in-out"
                   >
                     <option value="all">All Purchases</option>
                     <option value="sent">Email Sent</option>
@@ -309,7 +308,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Error notification */}
             {error && (
               <div className="mx-4 lg:mx-6 mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
@@ -333,7 +332,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Success notification */}
             {uploadSuccess && (
               <div className="fixed top-4 right-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-lg z-50 animate-fade-in-out">
@@ -347,7 +346,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Main content */}
             <div className="flex-1 overflow-hidden">
               <div className="h-full bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 mx-4 lg:mx-6">
@@ -394,8 +393,8 @@ const AdminBeatPurchasesPage = () => {
                         </tr>
                       ) : filteredPurchases.length > 0 ? (
                         filteredPurchases.map((purchase) => (
-                          <tr 
-                            key={purchase.id} 
+                          <tr
+                            key={purchase.id}
                             className="hover:bg-gray-50 transition duration-150"
                           >
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
@@ -425,8 +424,8 @@ const AdminBeatPurchasesPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${purchase.license_uploaded 
-                                  ? 'bg-green-100 text-green-800' 
+                                ${purchase.license_uploaded
+                                  ? 'bg-green-100 text-green-800'
                                   : 'bg-yellow-100 text-yellow-800'}`}
                               >
                                 {purchase.license_status || (purchase.license_uploaded ? 'Licensed' : 'Pending')}
@@ -434,10 +433,10 @@ const AdminBeatPurchasesPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
                               <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                                ${purchase.status === 'Processing' 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : purchase.delivered 
-                                    ? 'bg-green-100 text-green-800' 
+                                ${purchase.status === 'Processing'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : purchase.delivered
+                                    ? 'bg-green-100 text-green-800'
                                     : 'bg-gray-100 text-gray-700'}`}
                               >
                                 {purchase.status}
@@ -448,7 +447,7 @@ const AdminBeatPurchasesPage = () => {
                                 onClick={() => handleViewPurchase(purchase)}
                                 className="inline-flex items-center text-[#2d7a63] hover:text-[#245a4f] mr-4 transition duration-150"
                               >
-                                <Eye size={16} className="mr-1" /> 
+                                <Eye size={16} className="mr-1" />
                                 <span className="hidden sm:inline">View</span>
                               </button>
                               {!purchase.license_uploaded && (
@@ -456,7 +455,7 @@ const AdminBeatPurchasesPage = () => {
                                   onClick={() => handleUploadClick(purchase)}
                                   className="inline-flex items-center text-blue-600 hover:text-blue-900 transition duration-150"
                                 >
-                                  <Download size={16} className="mr-1" /> 
+                                  <Download size={16} className="mr-1" />
                                   <span className="hidden sm:inline">Upload</span>
                                 </button>
                               )}
@@ -486,8 +485,8 @@ const AdminBeatPurchasesPage = () => {
                   ) : filteredPurchases.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {filteredPurchases.map((purchase) => (
-                        <div 
-                          key={purchase.id} 
+                        <div
+                          key={purchase.id}
                           className="p-4 transition duration-150"
                         >
                           <div className="flex items-center justify-between mb-3">
@@ -501,14 +500,14 @@ const AdminBeatPurchasesPage = () => {
                               </div>
                             </div>
                             <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full 
-                              ${purchase.license_uploaded 
-                                ? 'bg-green-100 text-green-800' 
+                              ${purchase.license_uploaded
+                                ? 'bg-green-100 text-green-800'
                                 : 'bg-yellow-100 text-yellow-800'}`}
                             >
                               {purchase.license_status || (purchase.license_uploaded ? 'Licensed' : 'Pending')}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-2 mb-4">
                             <div className="text-sm text-gray-600">
                               <span className="font-medium">Artist:</span> {purchase.artist_name}
@@ -529,13 +528,13 @@ const AdminBeatPurchasesPage = () => {
                               <span className="font-medium">Delivered:</span> {purchase.delivered ? 'Yes' : 'No'}
                             </div>
                           </div>
-                          
+
                           <div className="flex space-x-3">
                             <button
                               onClick={() => handleViewPurchase(purchase)}
                               className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-[#2d7a63] text-sm font-medium rounded-lg text-[#2d7a63] bg-white hover:bg-[#245a4f] hover:text-white transition duration-150 shadow-sm"
                             >
-                              <Eye size={16} className="mr-2" /> 
+                              <Eye size={16} className="mr-2" />
                               View Details
                             </button>
                             {!purchase.license_uploaded && (
@@ -543,7 +542,7 @@ const AdminBeatPurchasesPage = () => {
                                 onClick={() => handleUploadClick(purchase)}
                                 className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition duration-150 shadow-sm"
                               >
-                                <Download size={16} className="mr-2" /> 
+                                <Download size={16} className="mr-2" />
                                 Upload License
                               </button>
                             )}
@@ -559,7 +558,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Pagination controls */}
             {purchases.length > 0 && !searchTerm && (
               <div className="px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 bg-white">
@@ -573,8 +572,8 @@ const AdminBeatPurchasesPage = () => {
                     onClick={goToPrevPage}
                     disabled={pagination.currentPage === 1}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${pagination.currentPage === 1 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${pagination.currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <ChevronLeft size={18} className="mr-1" />
@@ -584,8 +583,8 @@ const AdminBeatPurchasesPage = () => {
                     onClick={goToNextPage}
                     disabled={pagination.currentPage === pagination.totalPages}
                     className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg 
-                      ${pagination.currentPage === pagination.totalPages 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      ${pagination.currentPage === pagination.totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
                   >
                     <span className="hidden sm:inline">Next</span>
@@ -597,21 +596,21 @@ const AdminBeatPurchasesPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* View Purchase Modal */}
       {selectedPurchase && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Purchase Details</h2>
-              <button 
+              <button
                 onClick={() => setSelectedPurchase(null)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               <div className="flex flex-col items-center mb-6">
                 <div className="h-20 w-20 bg-[#2d7a63] bg-opacity-10 rounded-full flex items-center justify-center">
@@ -633,54 +632,54 @@ const AdminBeatPurchasesPage = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase ID</h4>
                   <p className="mt-1 text-sm text-gray-900">{selectedPurchase.id}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">License Type</h4>
                   <p className="mt-1 text-sm text-gray-900">{selectedPurchase.license_type}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</h4>
                   <p className="mt-1 text-sm text-gray-900">{selectedPurchase.customer_name}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Email</h4>
                   <p className="mt-1 text-sm text-gray-900">{selectedPurchase.customer_email}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Amount</h4>
                   <p className="mt-1 text-sm text-gray-900">
                     ₦{selectedPurchase.purchase_amount?.toLocaleString()}
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</h4>
                   <p className="mt-1 text-sm text-gray-900">{new Date(selectedPurchase.purchase_date).toLocaleString()}</p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">License Status</h4>
                   <p className="mt-1 text-sm text-gray-900">
                     {selectedPurchase.license_status || (selectedPurchase.license_uploaded ? 'Uploaded' : 'Not Uploaded')}
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Status</h4>
                   <span className={`mt-1 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${selectedPurchase.status === 'Processing' 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : selectedPurchase.delivered 
-                        ? 'bg-green-100 text-green-800' 
+                    ${selectedPurchase.status === 'Processing'
+                      ? 'bg-blue-100 text-blue-800'
+                      : selectedPurchase.delivered
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-700'}`}
                   >
                     {selectedPurchase.status}
@@ -695,7 +694,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
                 onClick={() => setSelectedPurchase(null)}
@@ -707,21 +706,21 @@ const AdminBeatPurchasesPage = () => {
           </div>
         </div>
       )}
-      
+
       {/* Upload License Modal */}
       {isUploadModalOpen && selectedPurchase && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Upload License</h2>
-              <button 
+              <button
                 onClick={() => setIsUploadModalOpen(false)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="mb-6">
                 <div className="flex items-center mb-4">
@@ -735,7 +734,7 @@ const AdminBeatPurchasesPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -746,14 +745,14 @@ const AdminBeatPurchasesPage = () => {
                       type="file"
                       accept="application/pdf"
                       onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#2d7a63] file:text-white hover:file:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-[#2d7a63] transition duration-150"
+                      className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#2d7a63] file:text-white hover:file:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-[#2d7a63] transition duration-150"
                     />
                   </div>
                   {selectedFile && (
                     <p className="mt-2 text-sm text-gray-600">Selected: {selectedFile.name}</p>
                   )}
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -767,7 +766,7 @@ const AdminBeatPurchasesPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
@@ -778,9 +777,8 @@ const AdminBeatPurchasesPage = () => {
               <button
                 onClick={handleUploadSubmit}
                 disabled={!selectedFile || uploadLoading}
-                className={`px-4 py-2 bg-[#2d7a63] text-white rounded-md hover:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2d7a63] transition duration-150 ${
-                  (!selectedFile || uploadLoading) ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`px-4 py-2 bg-[#2d7a63] text-white rounded-md hover:bg-[#245a4f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2d7a63] transition duration-150 ${(!selectedFile || uploadLoading) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {uploadLoading ? (
                   <span className="flex items-center">

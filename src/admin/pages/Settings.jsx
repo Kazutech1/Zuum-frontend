@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import { useAnnouncements } from '../hooks/useAnnouncements';
+import useAdminTerms from '../hooks/useAdminTerms';
 
 const AdminSettingsPage = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const AdminSettingsPage = () => {
 
   // Form states for different settings
   const [privacyPolicy, setPrivacyPolicy] = useState('');
-  const [termsOfService, setTermsOfService] = useState('');
+  // const [termsOfService, setTermsOfService] = useState(''); // Replaced by hook
   const [selectedUserId, setSelectedUserId] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -62,6 +63,19 @@ const AdminSettingsPage = () => {
     resetSuccess: resetAnnouncementSuccess,
   } = useAnnouncements();
 
+  // Use Admin Terms hook
+  const {
+    loading: isTermsLoading,
+    error: termsError,
+    success: termsSuccess,
+    termsContent,
+    lastModified: termsLastModified,
+    fetchTerms,
+    updateTerms,
+    resetStatus: resetTermsStatus,
+    setTermsContent
+  } = useAdminTerms();
+
   const adminRoutes = {
     users: '/users',
     distribution: '/addistributions',
@@ -74,6 +88,7 @@ const AdminSettingsPage = () => {
     subscriptions: '/admin-subscriptions',
     settings: '/admin-settings',
     'zuum-news': '/admin-zuum-news',
+    transactions: '/admin-transactions',
   };
 
   const handlePageChange = (pageId) => {
@@ -97,7 +112,13 @@ const AdminSettingsPage = () => {
       resetAnnouncementError();
       resetAnnouncementSuccess();
     }
-    
+
+    // Fetch Terms
+    if (cardId === 'terms') {
+      fetchTerms();
+      resetTermsStatus();
+    }
+
     setActiveCard(cardId);
     setModalContent(modalData);
     setShowModal(true);
@@ -121,6 +142,13 @@ const AdminSettingsPage = () => {
       if (result) {
         setAnnouncementContent('');
       }
+      return;
+    }
+
+    // Handle Terms Update
+    if (activeCard === 'terms') {
+      await updateTerms(termsContent);
+      // Don't close modal immediately to show success message
       return;
     }
 
@@ -203,69 +231,6 @@ const AdminSettingsPage = () => {
       iconBg: 'bg-orange-100',
       action: 'Send Now',
     },
-    // {
-    //   id: 'notifications',
-    //   title: 'Notification Settings',
-    //   description: 'Configure system notification preferences',
-    //   icon: Bell,
-    //   color: 'bg-indigo-50 text-indigo-600',
-    //   iconBg: 'bg-indigo-100',
-    //   action: 'Configure',
-    // },
-    // {
-    //   id: 'general',
-    //   title: 'General Settings',
-    //   description: 'Manage general platform settings',
-    //   icon: Globe,
-    //   color: 'bg-slate-50 text-slate-600',
-    //   iconBg: 'bg-slate-100',
-    //   action: 'Manage',
-    // },
-    // {
-    //   id: 'email',
-    //   title: 'Email Settings',
-    //   description: 'Configure email service and templates',
-    //   icon: Mail,
-    //   color: 'bg-cyan-50 text-cyan-600',
-    //   iconBg: 'bg-cyan-100',
-    //   action: 'Configure',
-    // },
-    // {
-    //   id: 'payment',
-    //   title: 'Payment Settings',
-    //   description: 'Manage payment gateway configurations',
-    //   icon: CreditCard,
-    //   color: 'bg-green-50 text-green-600',
-    //   iconBg: 'bg-green-100',
-    //   action: 'Manage',
-    // },
-    // {
-    //   id: 'database',
-    //   title: 'Database Settings',
-    //   description: 'View and manage database configurations',
-    //   icon: Database,
-    //   color: 'bg-orange-50 text-orange-600',
-    //   iconBg: 'bg-orange-100',
-    //   action: 'View',
-    // },
-    // {
-    //   id: 'api',
-    //   title: 'API Keys',
-    //   description: 'Manage API keys and integrations',
-    //   icon: Key,
-    //   color: 'bg-pink-50 text-pink-600',
-    //   iconBg: 'bg-pink-100',
-    //   action: 'Manage Keys',
-    // },
-    // {
-    //   id: 'security',
-    //   title: 'Security Settings',
-    //   description: 'Configure security policies and rules',
-    //   icon: AlertTriangle,
-    //   color: 'bg-rose-50 text-rose-600',
-    //   iconBg: 'bg-rose-100',
-    //   action: 'Configure',
-    // },
     {
       id: 'zuum-news',
       title: 'Zuum News',
@@ -302,17 +267,45 @@ const AdminSettingsPage = () => {
       case 'terms':
         return (
           <div className="space-y-4">
+            {/* Status Messages */}
+            {termsSuccess && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm text-emerald-800">Terms updated successfully</span>
+              </div>
+            )}
+            {termsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <span className="text-sm text-red-800">{termsError}</span>
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Terms of Service Content
-              </label>
-              <textarea
-                value={termsOfService}
-                onChange={(e) => setTermsOfService(e.target.value)}
-                rows={12}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] text-sm text-black"
-                placeholder="Enter terms of service content..."
-              />
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Terms of Service Content
+                </label>
+                {termsLastModified && (
+                  <span className="text-xs text-gray-400">
+                    Last updated: {formatDate(termsLastModified)}
+                  </span>
+                )}
+              </div>
+
+              {isTermsLoading && !termsContent ? (
+                <div className="py-12 flex justify-center">
+                  <Loader2 className="animate-spin text-gray-400" />
+                </div>
+              ) : (
+                <textarea
+                  value={termsContent}
+                  onChange={(e) => setTermsContent(e.target.value)}
+                  rows={12}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d7a63] focus:border-[#2d7a63] text-sm text-black font-mono"
+                  placeholder="Enter terms of service content..."
+                />
+              )}
             </div>
           </div>
         );
@@ -586,9 +579,8 @@ const AdminSettingsPage = () => {
       />
 
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-        }`}
+        className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+          }`}
       >
         {/* Mobile Header */}
         <div className="lg:hidden bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
@@ -698,7 +690,7 @@ const AdminSettingsPage = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                disabled={isAnnouncementLoading}
+                disabled={isAnnouncementLoading || isTermsLoading}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white transition-colors disabled:opacity-50"
               >
                 Cancel
@@ -706,17 +698,17 @@ const AdminSettingsPage = () => {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isAnnouncementLoading}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold text-white inline-flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50 ${
-                  activeCard === 'announcement'
+                disabled={isAnnouncementLoading || isTermsLoading}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold text-white inline-flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50 ${activeCard === 'announcement'
                     ? 'bg-orange-500 hover:bg-orange-600'
                     : 'bg-[#2d7a63] hover:bg-[#245a4f]'
-                }`}
+                  }`}
               >
-                {isAnnouncementLoading && activeCard === 'announcement' ? (
+                {/* Dynamic Loading State */}
+                {(isAnnouncementLoading && activeCard === 'announcement') || (isTermsLoading && activeCard === 'terms') ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending...
+                    {activeCard === 'terms' ? 'Saving...' : 'Sending...'}
                   </>
                 ) : activeCard === 'announcement' ? (
                   <>

@@ -92,11 +92,19 @@ export const useDeposits = () => {
       return { data, pagination: paginationData };
     } catch (err) {
       handleApiError(err, "Failed to fetch deposit requests");
-      return { data: [], pagination };
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          limit: filters.limit || 50,
+          offset: filters.offset || 0,
+          pages: 0
+        }
+      };
     } finally {
       setIsLoading(false);
     }
-  }, [handleApiError, pagination]);
+  }, [handleApiError]);
 
   /**
    * Approve a deposit request
@@ -126,10 +134,10 @@ export const useDeposits = () => {
       if (response.status === 200) {
         setSuccess(response.data?.message || "Deposit request approved successfully");
         // Update the local state to reflect the change
-        setDeposits(prev => 
-          prev.map(deposit => 
-            deposit.id === depositId 
-              ? { ...deposit, status: "APPROVED", tx_id: txId } 
+        setDeposits(prev =>
+          prev.map(deposit =>
+            deposit.id === depositId
+              ? { ...deposit, status: "APPROVED", tx_id: txId }
               : deposit
           )
         );
@@ -167,10 +175,10 @@ export const useDeposits = () => {
       if (response.status === 200) {
         setSuccess(response.data?.message || "Deposit request rejected successfully");
         // Update the local state to reflect the change
-        setDeposits(prev => 
-          prev.map(deposit => 
-            deposit.id === depositId 
-              ? { ...deposit, status: "REJECTED", reason } 
+        setDeposits(prev =>
+          prev.map(deposit =>
+            deposit.id === depositId
+              ? { ...deposit, status: "REJECTED", reason }
               : deposit
           )
         );

@@ -1,9 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Search, Plus, X, Check, Loader2, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import {
+  Wallet,
+  Search,
+  Plus,
+  X,
+  Check,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Trash2,
+  RefreshCcw,
+  CreditCard,
+  ArrowRightLeft,
+  History,
+  ShieldCheck,
+  Coins
+} from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import { useWallet } from '../hooks/useWallet';
 import { useDeposits } from '../hooks/useDeposits';
+import useAdminWalletUpdate from '../hooks/wallet/useAdminWalletUpdate';
 
 // Chain options for the dropdown
 const CHAIN_OPTIONS = [
@@ -12,7 +29,6 @@ const CHAIN_OPTIONS = [
   { value: 'BSC', label: 'BSC (USDT)' },
 ];
 
-// Helper to get display label from chain
 const getChainLabel = (chain) => {
   const option = CHAIN_OPTIONS.find((opt) => opt.value === chain);
   return option ? option.label : chain;
@@ -20,8 +36,10 @@ const getChainLabel = (chain) => {
 
 const AdminCryptoWalletPage = () => {
   const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // overview, deposits, wallets
 
-  // Wallet hook integration
+  // --- Hooks ---
   const {
     wallets,
     isLoading: walletsLoading,
@@ -30,14 +48,12 @@ const AdminCryptoWalletPage = () => {
     addWallet,
     updateWallet,
     deleteWallet,
-    resetError,
-    resetSuccess,
+    resetError: resetWalletError,
+    resetSuccess: resetWalletSuccess,
   } = useWallet();
 
-  // Deposits hook integration
   const {
     deposits,
-    pagination,
     isLoading: depositsLoading,
     error: depositsError,
     success: depositsSuccess,
@@ -48,763 +64,489 @@ const AdminCryptoWalletPage = () => {
     resetSuccess: resetDepositsSuccess,
   } = useDeposits();
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const {
+    updateBalance,
+    loading: balanceLoading,
+    error: balanceError,
+    success: balanceSuccess,
+    setSuccess: setBalanceSuccess,
+    setError: setBalanceError
+  } = useAdminWalletUpdate();
+
+  // --- Local State ---
   const [searchTerm, setSearchTerm] = useState('');
-  const [cryptoStatusFilter, setCryptoStatusFilter] = useState('all'); // all | PENDING | APPROVED | REJECTED | COMPLETED | FAILED
+  const [cryptoStatusFilter, setCryptoStatusFilter] = useState('all');
+
+  // Modals
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    address: '',
-    chain: 'TRON',
-  });
   const [selectedDeposit, setSelectedDeposit] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null); // Track which wallet action is loading
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // Track which wallet to delete
-  const [approvalTxId, setApprovalTxId] = useState(''); // Transaction ID for approval
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-  // Fetch deposits on component mount and when filter changes
+  // Forms
+  const [newAddress, setNewAddress] = useState({ address: '', chain: 'TRON' });
+  const [approvalTxId, setApprovalTxId] = useState('');
+  const [balanceForm, setBalanceForm] = useState({ userId: '', amount: '' });
+
+  // Action Loading State
+  const [actionLoading, setActionLoading] = useState(null);
+
+  // --- Effects ---
   useEffect(() => {
-    const filters = {};
-    if (cryptoStatusFilter !== 'all') {
-      filters.status = cryptoStatusFilter;
-    }
-    fetchDeposits(filters);
-  }, [cryptoStatusFilter]);
+    fetchDeposits(cryptoStatusFilter !== 'all' ? { status: cryptoStatusFilter } : {});
+  }, [cryptoStatusFilter, fetchDeposits]);
 
-  // Auto-clear success/error messages for wallets
+  // Message clearing
   useEffect(() => {
-    if (walletsSuccess) {
-      const timer = setTimeout(() => resetSuccess(), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [walletsSuccess, resetSuccess]);
+    if (walletsSuccess) setTimeout(() => resetWalletSuccess(), 3000);
+    if (walletsError) setTimeout(() => resetWalletError(), 5000);
+    if (depositsSuccess) setTimeout(() => resetDepositsSuccess(), 3000);
+    if (depositsError) setTimeout(() => resetDepositsError(), 5000);
+    if (balanceSuccess) setTimeout(() => setBalanceSuccess(false), 3000);
+    if (balanceError) setTimeout(() => setBalanceError(null), 5000);
+  }, [walletsSuccess, walletsError, depositsSuccess, depositsError, balanceSuccess, balanceError, resetWalletSuccess, resetWalletError, resetDepositsSuccess, resetDepositsError, setBalanceSuccess, setBalanceError]);
 
-  useEffect(() => {
-    if (walletsError) {
-      const timer = setTimeout(() => resetError(), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [walletsError, resetError]);
 
-  // Auto-clear success/error messages for deposits
-  useEffect(() => {
-    if (depositsSuccess) {
-      const timer = setTimeout(() => resetDepositsSuccess(), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [depositsSuccess, resetDepositsSuccess]);
+  // --- Handlers ---
 
-  useEffect(() => {
-    if (depositsError) {
-      const timer = setTimeout(() => resetDepositsError(), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [depositsError, resetDepositsError]);
+  // Balance Update
+  const handleBalanceUpdate = async (e) => {
+    e.preventDefault();
+    if (!balanceForm.userId || !balanceForm.amount) return;
 
-  const adminRoutes = {
-    users: '/users',
-    distribution: '/addistributions',
-    beat: '/adbeat',
-    'beat-posts': '/admin-beat-posts',
-    'audio-posts': '/admin-audio-posts',
-    promotion: '/adpromotion',
-    wallet: '/admin-wallet',
-    cryptoWallet: '/admin-wallet-crypto',
-    subscriptions: '/admin-subscriptions',
-    settings: '/admin-settings',
-    'zuum-news': '/admin-zuum-news',
-  };
+    const success = await updateBalance({
+      userId: balanceForm.userId,
+      newAmount: Number(balanceForm.amount)
+    });
 
-  const handlePageChange = (pageId) => {
-    const targetRoute = adminRoutes[pageId];
-    if (targetRoute) {
-      navigate(targetRoute);
+    if (success) {
+      setBalanceForm({ userId: '', amount: '' });
     }
   };
 
-  const filteredDeposits = deposits.filter((d) => {
-    const term = searchTerm.toLowerCase();
-    const userName = d.user?.name || d.user?.email || '';
-    const searchMatch =
-      !term ||
-      userName.toLowerCase().includes(term) ||
-      (d.tx_id || '').toLowerCase().includes(term) ||
-      (d.source_wallet_address || '').toLowerCase().includes(term) ||
-      (d.dest_wallet_address || '').toLowerCase().includes(term) ||
-      String(d.id).includes(term);
-    return searchMatch;
-  });
-
-  const openDepositModal = (deposit) => {
-    setSelectedDeposit(deposit);
-  };
-
-  const closeDepositModal = () => {
-    setSelectedDeposit(null);
-  };
-
+  // Deposits
   const handleApproveDeposit = async () => {
-    if (!selectedDeposit || selectedDeposit.status !== 'PENDING') return;
-    if (!approvalTxId.trim()) {
-      alert('Please enter a transaction ID to approve this deposit.');
-      return;
-    }
-    
+    if (!selectedDeposit || !approvalTxId.trim()) return;
     setActionLoading('approve');
     const success = await approveDeposit(selectedDeposit.id, approvalTxId.trim());
     setActionLoading(null);
-    
     if (success) {
       setApprovalTxId('');
-    closeDepositModal();
+      setSelectedDeposit(null);
     }
   };
 
   const handleDeclineDeposit = async () => {
-    if (!selectedDeposit || selectedDeposit.status !== 'PENDING') return;
-    
+    if (!selectedDeposit) return;
     const reason = prompt('Enter rejection reason (optional):') || '';
-    
     setActionLoading('reject');
     const success = await rejectDeposit(selectedDeposit.id, reason);
     setActionLoading(null);
-    
-    if (success) {
-    closeDepositModal();
-    }
+    if (success) setSelectedDeposit(null);
   };
 
-  const openAddressModal = () => {
-    setNewAddress({
-      address: '',
-      chain: 'TRON',
-    });
-    setShowAddressModal(true);
-  };
-
-  const closeAddressModal = () => {
-    setShowAddressModal(false);
-  };
-
+  // Wallets
   const handleSaveAddress = async (e) => {
     e.preventDefault();
-    if (!newAddress.address || !newAddress.chain) return;
-
-    setActionLoading('add');
+    setActionLoading('add_wallet');
     const success = await addWallet(newAddress.address, newAddress.chain, true);
     setActionLoading(null);
-
-    if (success) {
-      setShowAddressModal(false);
-    }
+    if (success) setShowAddressModal(false);
   };
 
-  const toggleAddressActive = async (wallet) => {
-    setActionLoading(wallet.id);
-    await updateWallet(wallet.id, { active: !wallet.active });
-    setActionLoading(null);
-  };
-
-  const handleDeleteWallet = async (walletId) => {
-    setActionLoading(walletId);
-    await deleteWallet(walletId);
+  const handleDeleteWallet = async (id) => {
+    setActionLoading(id);
+    await deleteWallet(id);
     setActionLoading(null);
     setShowDeleteConfirm(null);
   };
 
+
+  // Filtering
+  const filteredDeposits = deposits.filter((d) => {
+    const term = searchTerm.toLowerCase();
+    const userName = d.user?.name || d.user?.email || '';
+    return !term ||
+      userName.toLowerCase().includes(term) ||
+      (d.tx_id || '').toLowerCase().includes(term) ||
+      String(d.id).includes(term);
+  });
+
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-gray-50 font-sans text-gray-900">
       <AdminSidebar
         currentPage="cryptoWallet"
-        onPageChange={handlePageChange}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 bg-slate-50 ${
-          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-        }`}
-      >
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-slate-200 px-4 py-4 sticky top-0 z-20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-200"
-              >
-                <Wallet size={22} />
-              </button>
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900">
-                  Crypto wallet
-                </h1>
-                <p className="text-xs text-slate-500">
-                  USDT deposits & wallet addresses
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'} overflow-hidden`}>
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-8 py-5 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                <Wallet className="text-[#2d7a63]" size={28} /> Crypto Manager
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">Manage balances, wallets & deposits</p>
+            </div>
+          </div>
+          {/* Tabs (optional for future, strictly utilizing space now) */}
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'overview' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >Overview</button>
+            <button
+              onClick={() => setActiveTab('wallets')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'wallets' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >Wallets</button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-8 space-y-8">
+          {/* Notifications */}
+          {(walletsSuccess || depositsSuccess || balanceSuccess) && (
+            <div className="bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl border border-emerald-200 flex items-center gap-2 shadow-sm animate-fade-in">
+              <CheckCircle2 size={18} />
+              <span className="font-medium">{walletsSuccess || depositsSuccess || "Operation successful"}</span>
+            </div>
+          )}
+          {(walletsError || depositsError || balanceError) && (
+            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-200 flex items-center gap-2 shadow-sm animate-fade-in">
+              <AlertCircle size={18} />
+              <span className="font-medium">{walletsError || depositsError || balanceError}</span>
+            </div>
+          )}
+
+
+          {/* SECTION 1: BALANCE MANAGER (Interactive Console) */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Manual Credit/Debit */}
+            <div className="lg:col-span-2 bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-2xl shadow-xl overflow-hidden text-white relative">
+              <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+              <div className="p-6 border-b border-white/10 flex justify-between items-center relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/10 rounded-lg">
+                    <RefreshCcw className="text-emerald-400" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Balance Manager</h3>
+                    <p className="text-slate-400 text-xs">Directly update user USDT balances</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 relative z-10">
+                <form onSubmit={handleBalanceUpdate} className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1 w-full space-y-1">
+                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">User ID</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input
+                        type="text"
+                        value={balanceForm.userId}
+                        onChange={e => setBalanceForm(prev => ({ ...prev, userId: e.target.value }))}
+                        placeholder="User ID (e.g. 1024)"
+                        className="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-48 space-y-1">
+                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">New Balance</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
+                      <input
+                        type="number"
+                        value={balanceForm.amount}
+                        onChange={e => setBalanceForm(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full bg-slate-800/50 border border-slate-600 rounded-xl py-3 pl-8 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={balanceLoading || !balanceForm.userId || !balanceForm.amount}
+                    className="w-full md:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-bold shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    {balanceLoading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                    Update Balance
+                  </button>
+                </form>
+                <p className="mt-4 text-xs text-slate-500 italic flex items-center gap-1">
+                  <ShieldCheck size={12} /> This action will be logged and is irreversible via undo.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full flex flex-col">
-            {/* Desktop header */}
-            <div className="hidden lg:block mb-6 px-8 pt-8">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl font-semibold text-slate-900 flex items-center gap-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <Wallet className="w-5 h-5" />
-                    </span>
-                    Crypto wallet
-                  </h1>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Review USDT deposits and manage your on-chain wallet
-                    addresses.
-                  </p>
-                </div>
-
-                <div className="relative w-full md:w-80">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search by user, tx hash or ID"
-                    className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500/70 shadow-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Success/Error notifications */}
-            {(walletsSuccess || walletsError || depositsSuccess || depositsError) && (
-              <div className="px-4 lg:px-8 mb-4 space-y-2">
-                {(walletsSuccess || depositsSuccess) && (
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    {walletsSuccess || depositsSuccess}
-                  </div>
-                )}
-                {(walletsError || depositsError) && (
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    {walletsError || depositsError}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Top row: wallet address management */}
-            <div className="px-4 lg:px-8 mb-6">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900">
-                      Wallet addresses
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      Manage the USDT addresses users should send to.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={openAddressModal}
-                    disabled={walletsLoading}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add address
-                  </button>
-                </div>
-
-                <div className="divide-y divide-slate-100">
-                  {walletsLoading && wallets.length === 0 && (
-                    <div className="px-4 py-6 flex items-center justify-center gap-2 text-sm text-slate-500">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading wallets...
-                    </div>
-                  )}
-
-                  {!walletsLoading && wallets.length === 0 && (
-                    <div className="px-4 py-6 text-sm text-slate-500">
-                      No wallet addresses configured yet.
-                    </div>
-                  )}
-
-                  {wallets.map((wallet) => (
-                    <div
-                      key={wallet.id}
-                      className="px-4 md:px-6 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-                    >
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {getChainLabel(wallet.chain)}
-                        </p>
-                        <p className="text-xs font-mono text-slate-600 break-all">
-                          {wallet.address}
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                          {wallet.chain}
-                          {wallet.created_at && (
-                            <>
-                              {' '}•{' '}
-                              {new Date(wallet.created_at).toLocaleDateString('en-NG', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </>
-                          )}
-                        </p>
+            {/* Operations Summary (Visual Placeholder for future stats) */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-between">
+              <div>
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><History size={18} className="text-blue-500" /> Recent Activity</h3>
+                <div className="space-y-4">
+                  {!depositsLoading && deposits.slice(0, 3).map(d => (
+                    <div key={d.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                      <div className={`p-2 rounded-full ${d.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                        <Coins size={14} />
                       </div>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                            wallet.active
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {wallet.active ? 'Active' : 'Inactive'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => toggleAddressActive(wallet)}
-                          disabled={actionLoading === wallet.id}
-                          className="text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                        >
-                          {actionLoading === wallet.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : null}
-                          {wallet.active ? 'Disable' : 'Enable'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowDeleteConfirm(wallet.id)}
-                          disabled={actionLoading === wallet.id}
-                          className="text-xs font-medium text-red-600 border border-red-200 rounded-lg px-2.5 py-1 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Delete
-                        </button>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Deposit #{d.id}</p>
+                        <p className="text-xs text-gray-500">{d.amount} USDT • {d.status}</p>
                       </div>
                     </div>
                   ))}
+                  {deposits.length === 0 && <p className="text-sm text-gray-400">No recent activity.</p>}
                 </div>
               </div>
+              <button onClick={() => setCryptoStatusFilter('all')} className="mt-4 w-full py-2 border border-blue-100 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50">
+                View All Logs
+              </button>
+            </div>
+          </section>
+
+          {/* SECTION 2: SYSTEM WALLETS */}
+          <section hidden={activeTab === 'overview' && false}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <CreditCard className="text-gray-500" size={20} />
+                Admin Wallet Addresses
+              </h2>
+              <button
+                onClick={() => setShowAddressModal(true)}
+                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-1"
+              >
+                <Plus size={16} /> Add New
+              </button>
             </div>
 
-            {/* Crypto deposits table */}
-            <div className="flex-1 overflow-auto px-4 lg:px-8 pb-8">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                {/* Header + status filter */}
-                <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900">
-                      Crypto / USDT deposits
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      Approve or reject on-chain payments after confirming on
-                      your gateway.
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x border-gray-100 divide-gray-100">
+                {wallets.map((wallet) => (
+                  <div key={wallet.id} className="p-6 hover:bg-gray-50/50 transition-colors group relative">
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <button onClick={() => updateWallet(wallet.id, { active: !wallet.active })} className="p-1.5 bg-white border border-gray-200 rounded text-gray-500 hover:text-emerald-600 hover:border-emerald-200" title={wallet.active ? "Pause" : "Activate"}>
+                        <RefreshCcw size={14} />
+                      </button>
+                      <button onClick={() => setShowDeleteConfirm(wallet.id)} className="p-1.5 bg-white border border-gray-200 rounded text-gray-500 hover:text-red-600 hover:border-red-200" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
+                        {getChainLabel(wallet.chain)}
+                      </span>
+                      <span className={`w-2 h-2 rounded-full ${wallet.active ? 'bg-emerald-500' : 'bg-red-400'}`}></span>
+                    </div>
+                    <p className="font-mono text-sm text-gray-800 break-all mb-1 bg-gray-50 p-2 rounded border border-gray-100 select-all">
+                      {wallet.address}
                     </p>
+                    <p className="text-xs text-gray-400">Created: {new Date(wallet.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-medium text-slate-600 flex-wrap">
-                    {[
-                      { value: 'all', label: 'All' },
-                      { value: 'PENDING', label: 'Pending' },
-                      { value: 'APPROVED', label: 'Approved' },
-                      { value: 'REJECTED', label: 'Rejected' },
-                      { value: 'COMPLETED', label: 'Completed' },
-                      { value: 'FAILED', label: 'Failed' },
-                    ].map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => setCryptoStatusFilter(s.value)}
-                        className={`px-3 py-1 rounded-full ${
-                          cryptoStatusFilter === s.value
-                            ? 'bg-white text-slate-900 shadow-sm'
-                            : 'text-slate-600'
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Table header (desktop) */}
-                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <div className="col-span-3">User</div>
-                  <div className="col-span-3">Transaction</div>
-                  <div className="col-span-2">Network</div>
-                  <div className="col-span-2 text-right">Amount (USDT)</div>
-                  <div className="col-span-2 text-right">Status</div>
-                </div>
-
-                {/* Table body */}
-                <div className="divide-y divide-slate-100">
-                  {depositsLoading && (
-                    <div className="px-4 py-6 flex items-center justify-center gap-2 text-sm text-slate-500">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading deposits...
-                    </div>
-                  )}
-
-                  {!depositsLoading && filteredDeposits.length === 0 && (
-                    <div className="px-4 py-6 text-sm text-slate-500">
-                      No crypto deposits found for this filter.
-                    </div>
-                  )}
-
-                  {!depositsLoading && filteredDeposits.map((d) => {
-                    const dateLabel = d.created_at
-                      ? new Date(d.created_at).toLocaleString('en-NG', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : 'N/A';
-
-                    const statusClasses =
-                      d.status === 'APPROVED' || d.status === 'COMPLETED'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : d.status === 'REJECTED' || d.status === 'FAILED'
-                        ? 'bg-red-50 text-red-700'
-                        : 'bg-amber-50 text-amber-700';
-
-                    const userName = d.user?.name || d.user?.email || `User #${d.user_id}`;
-                    const chainLabel = getChainLabel(d.chain) || d.chain || 'Unknown';
-
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => openDepositModal(d)}
-                        className="w-full text-left px-4 md:px-6 py-3 hover:bg-slate-50/80 transition-colors"
-                      >
-                        <div className="md:grid md:grid-cols-12 md:items-center gap-4">
-                          {/* User */}
-                          <div className="md:col-span-3">
-                            <p className="text-sm font-medium text-slate-900">
-                              {userName}
-                            </p>
-                            <p className="mt-0.5 text-xs text-slate-500 md:hidden">
-                              {d.amount || 0} USDT • {chainLabel}
-                            </p>
-                          </div>
-
-                          {/* Transaction */}
-                          <div className="md:col-span-3 mt-1 md:mt-0">
-                            <p className="text-xs text-slate-500 truncate">
-                              Tx: {d.tx_id || 'Pending'}
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-slate-400">
-                              {dateLabel}
-                            </p>
-                          </div>
-
-                          {/* Network */}
-                          <div className="md:col-span-2 mt-2 md:mt-0 text-xs text-slate-600">
-                            {chainLabel}
-                          </div>
-
-                          {/* Amount */}
-                          <div className="md:col-span-2 mt-2 md:mt-0 text-right">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {d.amount || 0} USDT
-                            </p>
-                          </div>
-
-                          {/* Status */}
-                          <div className="md:col-span-2 mt-2 md:mt-0 text-right">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusClasses}`}
-                            >
-                              {d.status || 'PENDING'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                ))}
+                {wallets.length === 0 && (
+                  <div className="p-8 text-center text-gray-400 italic">No admin wallets configured.</div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
+          </section>
+
+          {/* SECTION 3: DEPOSITS TABLE */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <ArrowRightLeft className="text-gray-500" size={20} />
+                Incoming Deposits
+              </h2>
+              <div className="flex bg-white border border-gray-200 rounded-lg p-0.5">
+                {['all', 'PENDING', 'APPROVED', 'REJECTED'].map(status => (
+                  <button
+                    key={status}
+                    onClick={() => setCryptoStatusFilter(status)}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${cryptoStatusFilter === status ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">User</th>
+                    <th className="px-6 py-4">Transaction</th>
+                    <th className="px-6 py-4 text-right">Amount</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredDeposits.map((d) => (
+                    <tr key={d.id} className="hover:bg-gray-50/80 group">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-gray-900">{d.user?.name || `User #${d.user_id}`}</p>
+                        <p className="text-xs text-gray-500">{d.user?.email}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-xs font-mono text-gray-600 truncate max-w-[150px]" title={d.tx_id}>{d.tx_id || "Pending"}</p>
+                        <p className="text-[10px] text-gray-400">{d.chain} • {new Date(d.created_at).toLocaleDateString()}</p>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-bold text-emerald-600">+{d.amount} USDT</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${d.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                          d.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                          {d.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedDeposit(d)}
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:text-[#2d7a63] shadow-sm transition-all"
+                        >
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredDeposits.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center text-gray-400">No deposits found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
       </div>
 
-      {/* Deposit detail modal */}
-      {selectedDeposit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <div>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Crypto deposit
-                </p>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  ID #{selectedDeposit.id}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setApprovalTxId('');
-                  closeDepositModal();
-                }}
-                disabled={actionLoading}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 disabled:opacity-50"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* --- MODALS --- */}
 
-            <div className="px-4 py-4 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">User</span>
-                <span className="font-medium text-slate-900">
-                  {selectedDeposit.user?.name || selectedDeposit.user?.email || `User #${selectedDeposit.user_id}`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Amount</span>
-                <span className="font-semibold text-slate-900">
-                  {selectedDeposit.amount} USDT
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Network</span>
-                <span className="font-medium text-slate-900">
-                  {getChainLabel(selectedDeposit.chain) || selectedDeposit.chain}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-slate-500">Source wallet</span>
-                <span className="font-mono text-[11px] text-slate-800 truncate max-w-[200px] text-right">
-                  {selectedDeposit.source_wallet_address || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-slate-500">Dest wallet</span>
-                <span className="font-mono text-[11px] text-slate-800 truncate max-w-[200px] text-right">
-                  {selectedDeposit.dest_wallet_address || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Transaction ID</span>
-                <span className="font-mono text-[11px] text-slate-800 truncate max-w-[200px]">
-                  {selectedDeposit.tx_id || 'Pending'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Status</span>
-                <span className={`font-medium ${
-                  selectedDeposit.status === 'APPROVED' || selectedDeposit.status === 'COMPLETED'
-                    ? 'text-emerald-600'
-                    : selectedDeposit.status === 'REJECTED' || selectedDeposit.status === 'FAILED'
-                    ? 'text-red-600'
-                    : 'text-amber-600'
-                }`}>
-                  {selectedDeposit.status}
-                </span>
-              </div>
-              {selectedDeposit.reason && (
-                <div className="flex justify-between items-start">
-                  <span className="text-slate-500">Reason</span>
-                  <span className="font-medium text-slate-900 text-right max-w-[200px]">
-                    {selectedDeposit.reason}
-                  </span>
-                </div>
-              )}
-
-              {/* Transaction ID input for approval */}
-              {selectedDeposit.status === 'PENDING' && (
-                <div className="pt-2 border-t border-slate-100">
-                  <label className="text-xs font-medium text-slate-700 block mb-1">
-                    Transaction ID (required for approval)
-                  </label>
-                  <input
-                    type="text"
-                    value={approvalTxId}
-                    onChange={(e) => setApprovalTxId(e.target.value)}
-                    placeholder="0x1234567890abcdef..."
-                    disabled={actionLoading}
-                    className="w-full rounded-lg border text-black border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500/70 disabled:opacity-50"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="px-4 py-3 border-t border-slate-200 flex justify-end gap-2 bg-slate-50/60">
-              <button
-                type="button"
-                onClick={handleDeclineDeposit}
-                disabled={selectedDeposit.status !== 'PENDING' || actionLoading}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
-              >
-                {actionLoading === 'reject' && <Loader2 className="w-4 h-4 animate-spin" />}
-                Reject
-              </button>
-              <button
-                type="button"
-                onClick={handleApproveDeposit}
-                disabled={selectedDeposit.status !== 'PENDING' || !approvalTxId.trim() || actionLoading}
-                className="px-4 py-2 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 inline-flex items-center gap-1 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {actionLoading === 'approve' && <Loader2 className="w-4 h-4 animate-spin" />}
-                <Check className="w-4 h-4" />
-                Approve
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add wallet address modal */}
+      {/* 1. Wallet Address Modal */}
       {showAddressModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <h3 className="text-base font-semibold text-slate-900">
-                Add wallet address
-              </h3>
-              <button
-                type="button"
-                onClick={closeAddressModal}
-                disabled={actionLoading === 'add'}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 disabled:opacity-50"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-gray-900">Add Wallet Address</h3>
+              <button onClick={() => setShowAddressModal(false)} className="p-1 hover:bg-gray-200 rounded"><X size={18} /></button>
             </div>
-
-            <form onSubmit={handleSaveAddress} className="px-4 py-4 space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Blockchain Network
-                </label>
+            <form onSubmit={handleSaveAddress} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Blockchain Chain</label>
                 <select
-                  value={newAddress.chain}
-                  onChange={(e) =>
-                    setNewAddress((prev) => ({
-                      ...prev,
-                      chain: e.target.value,
-                    }))
-                  }
-                  disabled={actionLoading === 'add'}
-                  className="w-full rounded-lg border text-black border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500/70 bg-white disabled:opacity-50"
+                  value={newAddress.chain} onChange={e => setNewAddress(p => ({ ...p, chain: e.target.value }))}
+                  className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#2d7a63] outline-none font-medium"
                 >
-                  {CHAIN_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {CHAIN_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
               </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Wallet address
-                </label>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Address</label>
                 <textarea
-                  rows={3}
-                  value={newAddress.address}
-                  onChange={(e) =>
-                    setNewAddress((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
-                  placeholder="Paste your wallet address here"
-                  disabled={actionLoading === 'add'}
-                  className="w-full rounded-lg border text-black border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500/70 resize-none disabled:opacity-50"
-                />
+                  value={newAddress.address} onChange={e => setNewAddress(p => ({ ...p, address: e.target.value }))}
+                  placeholder="Paste wallet address..."
+                  rows="3"
+                  className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#2d7a63] outline-none font-mono text-sm text-gray-900"
+                ></textarea>
               </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeAddressModal}
-                  disabled={actionLoading === 'add'}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading === 'add' || !newAddress.address}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                >
-                  {actionLoading === 'add' && (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  )}
-                  Save address
-                </button>
+              <div className="flex justify-end pt-2">
+                <button type="button" onClick={() => setShowAddressModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg font-medium mr-2">Cancel</button>
+                <button type="submit" disabled={!newAddress.address} className="px-4 py-2 bg-[#2d7a63] text-white rounded-lg font-bold hover:bg-[#256652] disabled:opacity-50">Save Address</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Delete confirmation modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
-            <div className="px-4 py-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+      {/* 2. Deposit Details Modal */}
+      {selectedDeposit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div>
+                <h3 className="font-bold text-gray-900">Deposit #{selectedDeposit.id}</h3>
+                <p className="text-xs text-gray-500">Review incoming crypto details</p>
+              </div>
+              <button onClick={() => setSelectedDeposit(null)} className="p-1 hover:bg-gray-200 rounded"><X size={18} /></button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-500 font-medium">Amount</span>
+                  <p className="text-lg font-bold text-emerald-600">+{selectedDeposit.amount} USDT</p>
                 </div>
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">
-                    Delete wallet
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    This action cannot be undone.
-                  </p>
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="text-xs text-gray-500 font-medium">Chain</span>
+                  <p className="text-lg font-bold text-gray-800">{getChainLabel(selectedDeposit.chain)}</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-600">
-                Are you sure you want to delete this wallet address? Users will no longer be able to send funds to this address.
-              </p>
-            </div>
-            <div className="px-4 py-3 border-t border-slate-200 flex justify-end gap-2 bg-slate-50/60">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(null)}
-                disabled={actionLoading === showDeleteConfirm}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteWallet(showDeleteConfirm)}
-                disabled={actionLoading === showDeleteConfirm}
-                className="px-4 py-2 rounded-lg bg-red-600 text-sm font-semibold text-white hover:bg-red-700 inline-flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {actionLoading === showDeleteConfirm && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                Delete
-              </button>
+
+              <div className="space-y-3 pt-2">
+                <InfoRow label="User" value={`${selectedDeposit.user?.name || 'User'} (${selectedDeposit.user?.email || selectedDeposit.user_id})`} />
+                <InfoRow label="TX ID" value={selectedDeposit.tx_id || "N/A"} mono />
+                <InfoRow label="To Wallet" value={selectedDeposit.dest_wallet_address || "N/A"} mono />
+                <InfoRow label="Reason" value={selectedDeposit.reason || "N/A"} />
+              </div>
+
+              {selectedDeposit.status === 'PENDING' && (
+                <div className="pt-4 border-t border-gray-100">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Verification</label>
+                  <input
+                    type="text"
+                    value={approvalTxId}
+                    onChange={(e) => setApprovalTxId(e.target.value)}
+                    placeholder="Enter Transaction Hash to Approve..."
+                    className="w-full mt-2 p-3 bg-white border border-gray-300 rounded-xl text-sm focus:border-[#2d7a63] focus:ring-1 focus:ring-[#2d7a63] outline-none transition-all placeholder-gray-400 text-gray-900"
+                  />
+                  <div className="flex gap-3 mt-4">
+                    <button onClick={handleDeclineDeposit} disabled={actionLoading} className="flex-1 py-3 border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl font-bold transition-colors">Reject</button>
+                    <button onClick={handleApproveDeposit} disabled={actionLoading || !approvalTxId} className="flex-[2] py-3 bg-[#2d7a63] text-white hover:bg-[#256652] rounded-xl font-bold shadow-lg shadow-[#2d7a63]/20 transition-all disabled:opacity-50 disabled:shadow-none">
+                      {actionLoading ? 'Processing...' : 'Approve Deposit'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Delete Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center animate-bounce-in">
+            <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Delete Wallet?</h3>
+            <p className="text-sm text-gray-500 mt-2 mb-6">This will remove the address permanently. Users won't see it anymore.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2 border border-gray-200 rounded-lg font-medium hover:bg-gray-50">Cancel</button>
+              <button onClick={() => handleDeleteWallet(showDeleteConfirm)} className="flex-1 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 shadow-md">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
+const InfoRow = ({ label, value, mono }) => (
+  <div className="flex justify-between items-start text-sm">
+    <span className="text-gray-500 font-medium min-w-[80px]">{label}</span>
+    <span className={`text-gray-900 text-right ${mono ? 'font-mono text-xs break-all' : 'font-medium'}`}>{value}</span>
+  </div>
+);
+
 export default AdminCryptoWalletPage;
-
-
