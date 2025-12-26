@@ -28,25 +28,14 @@ function Homepage({ details, profile }) {
     setActiveTab(tab);
   };
 
-  useEffect(() => {
-    // Only trigger if specifically requested via navigation state
-    if (location.state?.openAnnouncement) {
-      setAnnounceTrigger(prev => prev + 1);
-
-      // Clear the state using navigation to properly update history stack
-      // This prevents the announcement from reappearing on refresh or back/forward navigation
-      const state = { ...location.state };
-      delete state.openAnnouncement;
-      window.history.replaceState(state, '');
-    }
-  }, [location]);
+  
 
   return (
     <div
       className="min-h-screen relative flex flex-col"
       style={{ backgroundColor: isDarkMode ? '#ffffff' : '#000000' }}
     >
-      <AnnouncementPopup trigger={announceTrigger} />
+      
       {/* Navbar - fixed at top */}
       <Navbar
         toggleSidebar={toggleSidebar}
