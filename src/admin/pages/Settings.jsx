@@ -178,15 +178,6 @@ const AdminSettingsPage = () => {
 
   const settingsCards = [
     {
-      id: 'privacy',
-      title: 'Privacy Policy',
-      description: 'Manage and update privacy policy content',
-      icon: FileText,
-      color: 'bg-blue-50 text-blue-600',
-      iconBg: 'bg-blue-100',
-      action: 'Edit Policy',
-    },
-    {
       id: 'terms',
       title: 'Terms of Service',
       description: 'Manage and update terms of service content',
@@ -194,33 +185,6 @@ const AdminSettingsPage = () => {
       color: 'bg-purple-50 text-purple-600',
       iconBg: 'bg-purple-100',
       action: 'Edit Terms',
-    },
-    {
-      id: 'makeAdmin',
-      title: 'Make User Admin',
-      description: 'Grant admin privileges to users',
-      icon: UserCog,
-      color: 'bg-emerald-50 text-emerald-600',
-      iconBg: 'bg-emerald-100',
-      action: 'Select User',
-    },
-    {
-      id: 'removeAdmin',
-      title: 'Remove Admin',
-      description: 'Revoke admin privileges from users',
-      icon: Shield,
-      color: 'bg-red-50 text-red-600',
-      iconBg: 'bg-red-100',
-      action: 'Select Admin',
-    },
-    {
-      id: 'adminAccount',
-      title: 'Admin Account',
-      description: 'Update admin email and password',
-      icon: Lock,
-      color: 'bg-amber-50 text-amber-600',
-      iconBg: 'bg-amber-100',
-      action: 'Update Account',
     },
     {
       id: 'announcement',
@@ -700,8 +664,8 @@ const AdminSettingsPage = () => {
                 onClick={handleSave}
                 disabled={isAnnouncementLoading || isTermsLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold text-white inline-flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50 ${activeCard === 'announcement'
-                    ? 'bg-orange-500 hover:bg-orange-600'
-                    : 'bg-[#2d7a63] hover:bg-[#245a4f]'
+                  ? 'bg-orange-500 hover:bg-orange-600'
+                  : 'bg-[#2d7a63] hover:bg-[#245a4f]'
                   }`}
               >
                 {/* Dynamic Loading State */}

@@ -7,7 +7,7 @@ import { useNews } from '../admin/hooks/useNews';
 
 const ZuumNews = () => {
   const [reactions, setReactions] = useState({});
-  
+
   // Use the news hook
   const {
     news,
@@ -42,7 +42,7 @@ const ZuumNews = () => {
       ...prev,
       [id]: prev[id] === type ? null : type
     }));
-    
+
     // TODO: Implement API call to update reactions
     // This would require a new endpoint like:
     // POST /api/news/{id}/reaction
@@ -57,6 +57,17 @@ const ZuumNews = () => {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  // Helper to get full image URL
+  const SERVER_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : '';
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    return `${SERVER_URL}/${cleanPath}`;
   };
 
   const handleRefresh = () => {
@@ -74,11 +85,11 @@ const ZuumNews = () => {
   return (
     <div style={darkModeStyles}>
       <Navbar name="Zuum News" />
-      
+
       {/* Header */}
-      <div 
+      <div
         className="text-white py-12 px-4"
-        style={{ 
+        style={{
           background: 'linear-gradient(to right, #2D8C72, #1f6352)'
         }}
       >
@@ -87,13 +98,13 @@ const ZuumNews = () => {
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Zuum News</h1>
             <p className="text-green-100 text-lg">Stay updated with music industry insights and platform updates</p>
           </div>
-          
+
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
             disabled={isLoading}
             className="p-3 rounded-full border transition-colors disabled:opacity-50"
-            style={{ 
+            style={{
               borderColor: 'rgba(255,255,255,0.2)',
               color: 'white',
               backgroundColor: 'rgba(255,255,255,0.1)'
@@ -133,13 +144,13 @@ const ZuumNews = () => {
         )}
       </div>
 
-      <div 
+      <div
         className="flex items-center justify-center mt-10 mb-10"
         style={{ backgroundColor: 'var(--color-bg-primary)' }}
       >
-        <div 
+        <div
           className="container w-full md:w-11/12 lg:w-5/6 overflow-hidden rounded-lg shadow-lg"
-          style={{ 
+          style={{
             backgroundColor: 'var(--color-bg-primary)',
             border: '1px solid var(--color-border)'
           }}
@@ -148,11 +159,11 @@ const ZuumNews = () => {
             {/* Loading State */}
             {isLoading && news.length === 0 ? (
               <div className="py-20 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full" 
-                     style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full"
+                  style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
                   <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#2D8C72' }} />
                 </div>
-                <h3 
+                <h3
                   className="text-xl font-semibold mb-2"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -170,20 +181,20 @@ const ZuumNews = () => {
                   const likes = newsItem.likes || 0;
                   const dislikes = newsItem.dislikes || 0;
                   const userReaction = reactions[newsItem.id];
-                  
+
                   return (
                     <article
                       key={newsItem.id}
                       className="rounded-lg shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden transform hover:scale-105 hover:-translate-y-2"
-                      style={{ 
+                      style={{
                         backgroundColor: 'var(--color-bg-secondary)',
                         border: '1px solid var(--color-border)'
                       }}
                     >
                       <div className="relative h-48">
-                        {newsItem.image ? (
+                        {newsItem.image_url ? (
                           <img
-                            src={newsItem.image}
+                            src={getImageUrl(newsItem.image_url)}
                             alt={newsItem.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -191,7 +202,7 @@ const ZuumNews = () => {
                             }}
                           />
                         ) : (
-                          <div 
+                          <div
                             className="w-full h-full flex items-center justify-center"
                             style={{ backgroundColor: '#374151' }}
                           >
@@ -199,42 +210,42 @@ const ZuumNews = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="p-5">
                         <div className="flex justify-between items-start mb-3">
-                          <h3 
+                          <h3
                             className="text-lg font-bold line-clamp-2"
                             style={{ color: 'var(--color-text-primary)' }}
                           >
                             {newsItem.title}
                           </h3>
                         </div>
-                        
-                        <p 
+
+                        <p
                           className="text-sm mb-4 line-clamp-3"
                           style={{ color: 'var(--color-text-secondary)' }}
                         >
                           {newsItem.content?.substring(0, 150)}...
                         </p>
-                        
-                        <div 
+
+                        <div
                           className="flex items-center justify-between text-xs mb-4"
                           style={{ color: 'var(--color-text-secondary)' }}
                         >
                           <span>{formatDate(newsItem.createdAt || newsItem.created_at)}</span>
                           <span>{readTime} read</span>
                         </div>
-                        
+
                         {/* Reactions */}
-                        <div 
+                        <div
                           className="flex items-center justify-between border-t pt-3"
                           style={{ borderColor: 'var(--color-border)' }}
                         >
                           <div className="flex items-center space-x-4">
-                            <button 
+                            <button
                               onClick={() => handleReaction(newsItem.id, 'like')}
                               className="flex items-center space-x-1 transition-colors duration-300"
-                              style={{ 
+                              style={{
                                 color: userReaction === 'like' ? '#2D8C72' : 'var(--color-text-secondary)'
                               }}
                               onMouseEnter={(e) => {
@@ -255,11 +266,11 @@ const ZuumNews = () => {
                               )}
                               <span>{likes + (userReaction === 'like' ? 1 : 0)}</span>
                             </button>
-                            
-                            <button 
+
+                            <button
                               onClick={() => handleReaction(newsItem.id, 'dislike')}
                               className="flex items-center space-x-1 transition-colors duration-300"
-                              style={{ 
+                              style={{
                                 color: userReaction === 'dislike' ? '#ef4444' : 'var(--color-text-secondary)'
                               }}
                               onMouseEnter={(e) => {
@@ -291,7 +302,7 @@ const ZuumNews = () => {
               /* No Results */
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📰</div>
-                <h3 
+                <h3
                   className="text-xl font-semibold mb-2"
                   style={{ color: 'var(--color-text-primary)' }}
                 >

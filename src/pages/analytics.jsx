@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { 
-  BarChart3, 
-  DollarSign, 
-  TrendingUp, 
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart3,
+  DollarSign,
+  TrendingUp,
   TrendingDown,
-  Users, 
+  Users,
   Download,
   Music,
   Globe,
@@ -14,63 +14,159 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/profile/NavBar';
 import BottomNav from '../components/homepage/BottomNav';
+import useAdminUserAnalytics from '../admin/hooks/user/useAdminUserAnalytics'; // Using the same hook as admin
+import { useAuth } from '../contexts/AuthContexts';
+
+// Generate consistent mock history based on a total value
+const generateMockHistory = (total) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  let data = [];
+  let current = total * 0.4; // Start at 40%
+
+  // Distribute growth curve
+  months.forEach((month, i) => {
+    // Add random growth
+    const growth = (total - current) / (months.length - i) * (0.8 + Math.random() * 0.4);
+    current += growth;
+    data.push({ label: month, value: Math.round(current) });
+  });
+
+  // Ensure last point hits somewhere near total or is the total
+  data[data.length - 1].value = total;
+  return data;
+};
+
+// Simple SVG Line Chart Component (Adapted for Dark Mode)
+const SimpleLineChart = ({ data, color }) => {
+  if (!data || data.length < 2) return null;
+
+  const height = 200;
+  const width = 600;
+  const padding = 20;
+
+  const maxValue = Math.max(...data.map(d => d.value));
+  const minValue = Math.min(...data.map(d => d.value));
+
+  // Calculate points
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+    const y = height - padding - ((d.value - minValue) / (maxValue - minValue || 1)) * (height - padding * 2);
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+        {/* Grid lines (simplified) */}
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+        <line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+
+        {/* The Line */}
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          points={points}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Dots */}
+        {data.map((d, i) => {
+          const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+          const y = height - padding - ((d.value - minValue) / (maxValue - minValue || 1)) * (height - padding * 2);
+          return (
+            <g key={i} className="group cursor-pointer">
+              <circle cx={x} cy={y} r="4" fill="#1a1a1a" stroke={color} strokeWidth="2" />
+              {/* Tooltip on hover */}
+              <text
+                x={x}
+                y={y - 10}
+                textAnchor="middle"
+                fontSize="12"
+                fill="#fff"
+                className="opacity-0 group-hover:opacity-100 transition-opacity font-bold"
+              >
+                {d.value.toLocaleString()}
+              </text>
+              <text
+                x={x}
+                y={height + 15}
+                textAnchor="middle"
+                fontSize="12"
+                fill="#666"
+              >
+                {d.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
 
 const Analytics = () => {
+  const { profile } = useAuth();
+  const { getAnalytics, loading } = useAdminUserAnalytics();
+
   const [timeRange, setTimeRange] = useState('7days');
+  const [analyticsData, setAnalyticsData] = useState({
+    total_streams: 0,
+    revenue: 0,
+    listeners: 0,
+    engagement: 0,
+    top_songs: [],
+    top_countries: []
+  });
 
-  const topSongs = [
-    { name: 'Midnight Dreams', streams: '120,453', growth: '+12.4%', isPositive: true },
-    { name: 'Summer Vibes', streams: '110,234', growth: '+8.2%', isPositive: true },
-    { name: 'City Lights', streams: '80,567', growth: '-2.1%', isPositive: false },
-    { name: 'Ocean Waves', streams: '43,890', growth: '+5.3%', isPositive: true }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (profile?.id || profile?.profile_id) {
+        // Determine ID to use: try profile_id first, then id
+        const targetId = profile.profile_id || profile.id;
+        const data = await getAnalytics(targetId);
 
-  const topCountries = [
-    { name: 'United States', streams: '12,345', percentage: 45, flag: 'US' },
-    { name: 'United Kingdom', streams: '9,050', percentage: 33, flag: 'GB' },
-    { name: 'Germany', streams: '8,950', percentage: 32, flag: 'DE' },
-    { name: 'Canada', streams: '6,234', percentage: 22, flag: 'CA' }
-  ];
+        if (data) {
+          setAnalyticsData({
+            total_streams: data.total_streams || 0,
+            revenue: data.revenue || 0,
+            listeners: data.listeners || 0,
+            engagement: data.engagement || 0,
+            top_songs: data.top_songs || [],
+            top_countries: data.top_countries || []
+          });
+        }
+      }
+    };
+    fetchData();
+  }, [profile, getAnalytics]);
 
   const stats = [
     {
       label: 'Total Streams',
-      value: '427,500',
-      change: '+12.4%',
-      isPositive: true,
+      value: Number(analyticsData.total_streams).toLocaleString(),
       icon: PlayCircle,
+      isPositive: true
     },
     {
       label: 'Revenue',
-      value: '$8,705',
-      change: '+5.8%',
-      isPositive: true,
+      value: `$${Number(analyticsData.revenue).toLocaleString()}`,
       icon: DollarSign,
+      isPositive: true
     },
     {
       label: 'Listeners',
-      value: '24,567',
-      change: '+8.4%',
-      isPositive: true,
+      value: Number(analyticsData.listeners).toLocaleString(),
       icon: Users,
+      isPositive: true
     },
     {
       label: 'Engagement',
-      value: '67.8%',
-      change: '-2.3%',
-      isPositive: false,
+      value: `${analyticsData.engagement}%`,
       icon: Activity,
+      isPositive: true
     }
-  ];
-
-  const chartData = [
-    { day: 'Mon', value: 65 },
-    { day: 'Tue', value: 85 },
-    { day: 'Wed', value: 75 },
-    { day: 'Thu', value: 90 },
-    { day: 'Fri', value: 95 },
-    { day: 'Sat', value: 88 },
-    { day: 'Sun', value: 100 }
   ];
 
   // Green gradient for all icons
@@ -88,7 +184,7 @@ const Analytics = () => {
             <h2 className="text-3xl font-bold text-white">Analytics</h2>
             <p className="text-sm text-gray-400 mt-1">Track your music performance</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Time Range Selector */}
             <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
@@ -96,9 +192,8 @@ const Analytics = () => {
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    timeRange === range ? 'text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeRange === range ? 'text-white' : 'text-gray-400 hover:text-white'
+                    }`}
                   style={{
                     background: timeRange === range ? 'rgba(45,140,114,0.2)' : 'transparent'
                   }}
@@ -107,185 +202,146 @@ const Analytics = () => {
                 </button>
               ))}
             </div>
-
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium transition-all hover:scale-105 active:scale-95" style={{ background: 'linear-gradient(135deg, #2D8C72 0%, #34A085 100%)' }}>
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
           </div>
         </div>
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={index}
-                  className="rounded-2xl p-5 transition-all hover:scale-[1.02] cursor-pointer"
-                  style={{ 
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)'
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${greenGradient}`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div className={`flex items-center gap-1 text-sm font-semibold ${stat.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                      {stat.isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      {stat.change}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-400 mb-1">{stat.label}</div>
-                  <div className="text-3xl font-bold text-white">{stat.value}</div>
-                </div>
-              );
-            })}
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Listener Growth Chart */}
-            <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Listener Growth</h3>
-                  <p className="text-sm text-gray-400">Weekly performance</p>
-                </div>
-                <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                  <TrendingUp className="w-4 h-4" />
-                  +8.4%
-                </div>
-              </div>
-              
-              <div className="h-56 flex items-end justify-between gap-2">
-                {chartData.map((item, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                    <div className="w-full relative group">
-                      <div
-                        className="w-full rounded-t-lg transition-all duration-300 group-hover:opacity-80"
-                        style={{ 
-                          height: `${(item.value / 100) * 200}px`,
-                          background: 'linear-gradient(180deg, #2D8C72 0%, #34A085 100%)'
-                        }}
-                      />
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap" style={{ background: 'rgba(0,0,0,0.9)' }}>
-                        <div className="text-white text-sm font-semibold">{item.value}K</div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-400 font-medium">{item.day}</span>
-                  </div>
-                ))}
-              </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-12 h-12 border-4 border-[#2d7a63] border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-500">Loading analytics...</p>
             </div>
-
-            {/* Top Songs */}
-            <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Top Songs</h3>
-                  <p className="text-sm text-gray-400">Most streamed tracks</p>
-                </div>
-                <button className="text-[#2D8C72] text-sm font-semibold hover:text-[#34A085] transition-colors">
-                  View all
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {topSongs.map((song, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-4 p-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer group"
-                  >
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg ${greenGradient}`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white mb-1 truncate">{song.name}</div>
-                      <div className="text-sm text-gray-400">{song.streams} streams</div>
-                    </div>
-                    <div className={`flex items-center gap-1 text-sm font-semibold ${song.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                      {song.isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      {song.growth}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Geographic Distribution */}
-            <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Top Countries</h3>
-                  <p className="text-sm text-gray-400">Geographic distribution</p>
-                </div>
-                <Globe className="w-5 h-5 text-gray-400" />
-              </div>
-
-              <div className="space-y-4">
-                {topCountries.map((country, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{country.flag}</span>
-                        <div>
-                          <div className="text-white font-medium">{country.name}</div>
-                          <div className="text-sm text-gray-400">{country.streams} streams</div>
+          ) : (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {stats.map((stat, index) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="rounded-2xl p-5 transition-all hover:scale-[1.02] cursor-pointer"
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${greenGradient}`}>
+                          <Icon className="w-6 h-6 text-white" />
+                        </div>
+                        <div className={`flex items-center gap-1 text-sm font-semibold text-green-400`}>
+                          <TrendingUp className="w-4 h-4" />
                         </div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-400">{country.percentage}%</div>
-                    </div>
-                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${country.percentage}%`,
-                          background: 'linear-gradient(90deg, #2D8C72 0%, #34A085 100%)'
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Recent Activity</h3>
-                  <p className="text-sm text-gray-400">Latest updates</p>
-                </div>
-                <Calendar className="w-5 h-5 text-gray-400" />
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  { action: 'New peak streams', song: 'Midnight Dreams', time: '2 hours ago', icon: TrendingUp },
-                  { action: 'Playlist added', song: 'Summer Vibes', time: '5 hours ago', icon: Music },
-                  { action: 'Milestone reached', song: '100K total streams', time: '1 day ago', icon: Activity },
-                  { action: 'New follower', song: '+1,234 this week', time: '2 days ago', icon: Users }
-                ].map((activity, index) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div key={index} className="flex items-start gap-3 p-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#2D8C72]/10 to-[#34A085]/10 text-white">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-white mb-1">{activity.action}</div>
-                        <div className="text-sm text-gray-400 truncate">{activity.song}</div>
-                        <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
-                      </div>
+                      <div className="text-sm text-gray-400 mb-1">{stat.label}</div>
+                      <div className="text-3xl font-bold text-white">{stat.value}</div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Streams Growth Chart (Using Mock History Generator) */}
+                <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">Growth Trends</h3>
+                      <p className="text-sm text-gray-400">Streams over time</p>
+                    </div>
+                  </div>
+
+                  <div className="h-56 w-full">
+                    <SimpleLineChart
+                      data={generateMockHistory(analyticsData.total_streams)}
+                      color="#2d7a63"
+                    />
+                  </div>
+                </div>
+
+                {/* Top Songs */}
+                <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">Top Songs</h3>
+                      <p className="text-sm text-gray-400">Most streamed tracks</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {analyticsData.top_songs && analyticsData.top_songs.length > 0 ? (
+                      analyticsData.top_songs.map((song, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-4 p-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer group"
+                        >
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg ${greenGradient}`}>
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white mb-1 truncate">{song.name}</div>
+                            <div className="text-sm text-gray-400">
+                              {song.streams ? Number(song.streams).toLocaleString() : '0'} streams
+                            </div>
+                          </div>
+                          <div className={`flex items-center gap-1 text-sm font-semibold text-green-400`}>
+                            {song.percentage}%
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No song data available</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Top Countries */}
+                <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">Top Countries</h3>
+                      <p className="text-sm text-gray-400">Geographic distribution</p>
+                    </div>
+                    <Globe className="w-5 h-5 text-gray-400" />
+                  </div>
+
+                  <div className="space-y-4">
+                    {analyticsData.top_countries && analyticsData.top_countries.length > 0 ? (
+                      analyticsData.top_countries.map((country, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{country.flag}</span>
+                              <div>
+                                <div className="text-white font-medium">{country.name}</div>
+                                <div className="text-sm text-gray-400">
+                                  {country.streams ? Number(country.streams).toLocaleString() : '0'} streams
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm font-semibold text-gray-400">{country.percentage}%</div>
+                          </div>
+                          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(country.percentage, 100)}%`,
+                                background: 'linear-gradient(90deg, #2D8C72 0%, #34A085 100%)'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No country data available</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

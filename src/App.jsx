@@ -81,6 +81,7 @@ import WithdrawalPage from './components/dashboard/WithdrawalPage';
 import P2PTransferPage from './components/dashboard/TransferPage';
 import Analytics from './pages/analytics';
 import TransactionHistory from './pages/TransactionHistory';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 // Dark mode styles for consistent theming
 const darkModeStyles = {
@@ -270,6 +271,7 @@ const App = () => (
                 <Route path="/adlog" element={<AdminLogin />} />
                 <Route path="/adsin" element={<AdminSignup />} />
                 <Route path="/adver" element={<VerifyEmailForm />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                 {/* Legacy standalone withdrawal page */}
                 {/* <Route path="/withdrawalRequest" element={<AdminWithdrawalRequest />} /> */}
 

@@ -15,11 +15,13 @@ import {
     Music,
     Globe,
     DollarSign,
-    Activity
+    Activity,
+    Trash2
 } from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import useAdminSubscribedUsers from '../hooks/user/useAdminSubscribedUsers';
 import useAdminUserAnalytics from '../hooks/user/useAdminUserAnalytics';
+import useAdminUser from '../hooks/user/useAdminUser';
 
 const AdminSubscribersPage = () => {
     const navigate = useNavigate();
@@ -34,11 +36,16 @@ const AdminSubscribersPage = () => {
     } = useAdminSubscribedUsers();
 
     const {
+        fetchUserById
+    } = useAdminUser();
+
+    const {
         analytics,
         loading: analyticsLoading,
         getAnalytics,
         updateAnalytics,
-        createAnalytics
+        createAnalytics,
+        deleteAnalytics
     } = useAdminUserAnalytics();
 
     // Local state
@@ -88,18 +95,34 @@ const AdminSubscribersPage = () => {
 
     // Handler for Analytics Button
     const handleOpenAnalytics = async (user) => {
-        setSelectedUser(user);
-        setManualProfileId(user.profile_id || '');
+        setIsAnalyticsModalOpen(true); // Open immediately to show loading state if needed
         setIsEditMode(false);
 
-        if (user.profile_id) {
-            await fetchAndSetAnalytics(user.profile_id);
+        let profileId = user.profile_id;
+
+        // If no profile_id but we have a user ID, try to fetch the user details
+        if (!profileId && user.id) {
+            try {
+                const userDetails = await fetchUserById(user.id);
+                if (userDetails && userDetails.profile_id) {
+                    profileId = userDetails.profile_id;
+                    // Update local user object for display if needed
+                    user.profile_id = profileId;
+                }
+            } catch (err) {
+                console.error("Failed to fetch user details for profile ID", err);
+            }
+        }
+
+        setSelectedUser(user);
+        setManualProfileId(profileId || '');
+
+        if (profileId) {
+            await fetchAndSetAnalytics(profileId);
         } else {
             // Reset form if no profile ID (shouldn't happen with valid users but good safety)
             resetAnalyticsForm();
         }
-
-        setIsAnalyticsModalOpen(true);
     };
 
     const fetchAndSetAnalytics = async (id) => {
@@ -150,7 +173,7 @@ const AdminSubscribersPage = () => {
             listeners: 0,
             engagement: 0,
             top_songs: [
-                { name: "Song A", percentage: 0 },
+                { name: "Song A", percentage: 0, flag: "🇺🇸" },
             ],
             top_countries: [
                 { name: "Country A", flag: "🏳️", percentage: 0 }
@@ -165,11 +188,33 @@ const AdminSubscribersPage = () => {
         if (analytics) {
             await updateAnalytics(manualProfileId, analyticsForm);
         } else {
-            await createAnalytics({ ...analyticsForm, profile_id: manualProfileId });
+            // User curl uses "profileId"
+            await createAnalytics({ ...analyticsForm, profileId: Number(manualProfileId) });
         }
         setIsEditMode(false);
         // Refresh
         await fetchAndSetAnalytics(manualProfileId);
+    };
+
+    const handleDeleteAnalytics = async () => {
+        if (!manualProfileId) return;
+
+        if (window.confirm('Are you sure you want to delete analytics for this user? This action cannot be undone.')) {
+            const success = await deleteAnalytics(manualProfileId);
+            if (success) {
+                setHasAnalyticsData(false);
+                setIsEditMode(false);
+                // Reset form
+                setAnalyticsForm({
+                    total_streams: 0,
+                    revenue: 0,
+                    listeners: 0,
+                    engagement: 0,
+                    top_songs: [],
+                    top_countries: []
+                });
+            }
+        }
     };
 
     const handleInputChange = (field, value) => {
@@ -253,38 +298,63 @@ const AdminSubscribersPage = () => {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="bg-white text-xs uppercase text-gray-500 border-b border-gray-100">
-                                        <th className="px-6 py-4 font-semibold">User</th>
-                                        <th className="px-6 py-4 font-semibold">Plan</th>
-                                        <th className="px-6 py-4 font-semibold text-right">Profile ID</th>
+                                        <th className="px-6 py-4 font-semibold">ID</th>
+                                        <th className="px-6 py-4 font-semibold">User Details</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Plan Info</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Amount</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Status</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Dates</th>
                                         <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 text-sm">
-                                    {userList.filter(u => u.username.toLowerCase().includes(searchTerm.toLowerCase())).map((user) => (
+                                    {userList.filter(u => u.username.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())).map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 text-gray-500 font-mono text-xs">#{user.id}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-9 w-9 bg-[#2d7a63]/10 text-[#2d7a63] rounded-full flex items-center justify-center font-bold">
-                                                        {user.username[0].toUpperCase()}
+                                                    <div className="h-9 w-9 bg-[#2d7a63]/10 text-[#2d7a63] rounded-full flex items-center justify-center font-bold shrink-0">
+                                                        {user.username?.[0]?.toUpperCase() || 'U'}
                                                     </div>
                                                     <div>
-                                                        <p className="font-semibold text-gray-900">{user.firstname} {user.lastname}</p>
-                                                        <p className="text-gray-500 text-xs">@{user.username}</p>
+                                                        <p className="font-semibold text-gray-900 line-clamp-1">{user.firstname} {user.lastname}</p>
+                                                        <p className="text-gray-500 text-xs line-clamp-1">@{user.username}</p>
+                                                        <p className="text-gray-400 text-[10px] line-clamp-1">{user.email}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                                                    {user.plan || 'Standard'}
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex flex-col items-center">
+                                                    <span className="font-semibold text-gray-800 capitalize">{user.plan_name}</span>
+                                                    <span className="text-xs text-gray-500 capitalize">{user.frequency}</span>
+                                                    <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 mt-1 uppercase tracking-wide">{user.identity}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="font-mono font-medium text-gray-700">
+                                                    {Number(user.amount).toLocaleString()} <span className="text-xs text-gray-400">{user.currency}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${user.subscription_status === 'completed' || user.subscription_status === 'active'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : user.subscription_status === 'expired'
+                                                        ? 'bg-red-100 text-red-700'
+                                                        : 'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {user.subscription_status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right font-mono text-gray-500">
-                                                {user.profile_id || '-'}
+                                            <td className="px-6 py-4 text-center text-xs">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-gray-500">Sub: <span className="text-gray-800">{new Date(user.subscription_date).toLocaleDateString()}</span></span>
+                                                    <span className="text-gray-500">Exp: <span className="text-gray-800">{new Date(user.expires_at).toLocaleDateString()}</span></span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => handleOpenAnalytics(user)}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2d7a63] text-white rounded-lg text-xs font-medium hover:bg-[#246350] transition-colors shadow-sm"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2d7a63] text-white rounded-lg text-xs font-medium hover:bg-[#246350] transition-colors shadow-sm whitespace-nowrap"
                                                 >
                                                     <BarChart2 size={14} /> Analytics
                                                 </button>
@@ -415,6 +485,26 @@ const AdminSubscribersPage = () => {
                                         />
                                     </div>
 
+                                    {/* Graph Section */}
+                                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                                <TrendingUp size={16} className="text-[#2d7a63]" /> Growth Trends
+                                            </h4>
+                                            <select className="text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none text-gray-600 bg-gray-50">
+                                                <option>Last 6 Months</option>
+                                                <option>Last Year</option>
+                                            </select>
+                                        </div>
+                                        <div className="h-64 w-full">
+                                            {/* Make-shift graph using custom SVG component */}
+                                            <SimpleLineChart
+                                                data={analyticsForm.history || generateMockHistory(analyticsForm.total_streams)}
+                                                color="#2d7a63"
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Charts Section */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Top Songs Chart */}
@@ -427,7 +517,7 @@ const AdminSubscribersPage = () => {
                                                     <button
                                                         onClick={() => setAnalyticsForm(prev => ({
                                                             ...prev,
-                                                            top_songs: [...prev.top_songs, { name: "New Song", percentage: 0 }]
+                                                            top_songs: [...prev.top_songs, { name: "New Song", percentage: 0, streams: "0", flag: "🇺🇸" }]
                                                         }))}
                                                         className="text-xs flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-gray-700 font-medium transition-colors"
                                                     >
@@ -443,6 +533,17 @@ const AdminSubscribersPage = () => {
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 <input
                                                                     type="text"
+                                                                    value={song.flag}
+                                                                    onChange={(e) => {
+                                                                        const newSongs = [...analyticsForm.top_songs];
+                                                                        newSongs[idx].flag = e.target.value;
+                                                                        setAnalyticsForm(prev => ({ ...prev, top_songs: newSongs }));
+                                                                    }}
+                                                                    className="w-10 text-center text-sm text-gray-900 border border-gray-300 rounded px-2 py-1 outline-none focus:border-[#2d7a63]"
+                                                                    placeholder="Flag"
+                                                                />
+                                                                <input
+                                                                    type="text"
                                                                     value={song.name}
                                                                     onChange={(e) => {
                                                                         const newSongs = [...analyticsForm.top_songs];
@@ -451,6 +552,17 @@ const AdminSubscribersPage = () => {
                                                                     }}
                                                                     className="flex-1 text-sm text-gray-900 border border-gray-300 rounded px-2 py-1 outline-none focus:border-[#2d7a63]"
                                                                     placeholder="Song Name"
+                                                                />
+                                                                <input
+                                                                    type="text"
+                                                                    value={song.streams}
+                                                                    onChange={(e) => {
+                                                                        const newSongs = [...analyticsForm.top_songs];
+                                                                        newSongs[idx].streams = e.target.value;
+                                                                        setAnalyticsForm(prev => ({ ...prev, top_songs: newSongs }));
+                                                                    }}
+                                                                    className="w-20 text-sm text-gray-900 border border-gray-300 rounded px-2 py-1 outline-none focus:border-[#2d7a63]"
+                                                                    placeholder="Streams"
                                                                 />
                                                                 <input
                                                                     type="number"
@@ -475,13 +587,16 @@ const AdminSubscribersPage = () => {
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex justify-between text-sm mb-1">
-                                                                <span className="font-medium text-gray-700">{song.name}</span>
-                                                                <span className="text-gray-500">{Number(song.percentage)}%</span>
+                                                            <div className="flex justify-between text-sm mb-1 align-bottom">
+                                                                <div>
+                                                                    <span className="font-medium text-gray-700 block">{song.name}</span>
+                                                                    {song.streams && <span className="text-[10px] text-gray-400 font-mono">{Number(song.streams).toLocaleString()} streams</span>}
+                                                                </div>
+                                                                <span className="text-gray-500 font-semibold">{Number(song.percentage)}%</span>
                                                             </div>
                                                         )}
 
-                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mt-1">
                                                             <div
                                                                 className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500"
                                                                 style={{ width: `${Math.min(song.percentage, 100)}%` }}
@@ -503,7 +618,7 @@ const AdminSubscribersPage = () => {
                                                     <button
                                                         onClick={() => setAnalyticsForm(prev => ({
                                                             ...prev,
-                                                            top_countries: [...prev.top_countries, { name: "Country", flag: "🏳️", percentage: 0 }]
+                                                            top_countries: [...prev.top_countries, { name: "Country", flag: "🏳️", percentage: 0, streams: "0" }]
                                                         }))}
                                                         className="text-xs flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-gray-700 font-medium transition-colors"
                                                     >
@@ -540,6 +655,17 @@ const AdminSubscribersPage = () => {
                                                                     placeholder="Country Name"
                                                                 />
                                                                 <input
+                                                                    type="text"
+                                                                    value={country.streams}
+                                                                    onChange={(e) => {
+                                                                        const newCountries = [...analyticsForm.top_countries];
+                                                                        newCountries[idx].streams = e.target.value;
+                                                                        setAnalyticsForm(prev => ({ ...prev, top_countries: newCountries }));
+                                                                    }}
+                                                                    className="w-20 text-sm text-gray-900 border border-gray-300 rounded px-2 py-1 outline-none focus:border-[#2d7a63]"
+                                                                    placeholder="Streams"
+                                                                />
+                                                                <input
                                                                     type="number"
                                                                     value={country.percentage}
                                                                     onChange={(e) => {
@@ -562,15 +688,18 @@ const AdminSubscribersPage = () => {
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex justify-between text-sm mb-1">
-                                                                <span className="font-medium text-gray-700 flex items-center gap-2">
-                                                                    <span className="text-xs bg-gray-100 px-1 rounded">{country.flag}</span> {country.name}
-                                                                </span>
-                                                                <span className="text-gray-500">{Number(country.percentage)}%</span>
+                                                            <div className="flex justify-between text-sm mb-1 align-bottom">
+                                                                <div>
+                                                                    <span className="font-medium text-gray-700 flex items-center gap-2">
+                                                                        <span className="text-xs bg-gray-100 px-1 rounded">{country.flag}</span> {country.name}
+                                                                    </span>
+                                                                    {country.streams && <span className="text-[10px] text-gray-400 font-mono ml-6 block">{Number(country.streams).toLocaleString()} streams</span>}
+                                                                </div>
+                                                                <span className="text-gray-500 font-semibold">{Number(country.percentage)}%</span>
                                                             </div>
                                                         )}
 
-                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mt-1">
                                                             <div
                                                                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
                                                                 style={{ width: `${Math.min(country.percentage, 100)}%` }}
@@ -588,19 +717,29 @@ const AdminSubscribersPage = () => {
 
                         {/* Footer Controls */}
                         {isEditMode && (
-                            <div className="p-4 border-t border-gray-200 bg-white flex justify-end gap-3">
-                                <button
-                                    onClick={() => setIsEditMode(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveAnalytics}
-                                    className="px-4 py-2 bg-[#2d7a63] text-white rounded-lg font-bold hover:bg-[#256652] shadow-lg shadow-[#2d7a63]/20 flex items-center gap-2"
-                                >
-                                    <Save size={18} /> Save Changes
-                                </button>
+                            <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center gap-3">
+                                {hasAnalyticsData && (
+                                    <button
+                                        onClick={handleDeleteAnalytics}
+                                        className="px-4 py-2 border border-red-200 text-red-600 rounded-lg font-medium hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                        <Trash2 size={18} /> Delete Analytics
+                                    </button>
+                                )}
+                                <div className="flex gap-3 ml-auto">
+                                    <button
+                                        onClick={() => setIsEditMode(false)}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveAnalytics}
+                                        className="px-4 py-2 bg-[#2d7a63] text-white rounded-lg font-bold hover:bg-[#256652] shadow-lg shadow-[#2d7a63]/20 flex items-center gap-2"
+                                    >
+                                        <Save size={18} /> Save Changes
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -637,6 +776,95 @@ const MetricCard = ({ label, value, icon: Icon, color, prefix = '', suffix = '',
                     {prefix}{Number(value).toLocaleString()}{suffix}
                 </h3>
             )}
+        </div>
+    );
+};
+
+// Generate consistent mock history based on a total value
+const generateMockHistory = (total) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    let data = [];
+    let current = total * 0.4; // Start at 40%
+
+    // Distribute growth curve
+    months.forEach((month, i) => {
+        // Add random growth
+        const growth = (total - current) / (months.length - i) * (0.8 + Math.random() * 0.4);
+        current += growth;
+        data.push({ label: month, value: Math.round(current) });
+    });
+
+    // Ensure last point hits somewhere near total or is the total
+    data[data.length - 1].value = total;
+    return data;
+};
+
+// Simple SVG Line Chart Component
+const SimpleLineChart = ({ data, color }) => {
+    if (!data || data.length < 2) return null;
+
+    const height = 200;
+    const width = 600;
+    const padding = 20;
+
+    const maxValue = Math.max(...data.map(d => d.value));
+    const minValue = Math.min(...data.map(d => d.value));
+
+    // Calculate points
+    const points = data.map((d, i) => {
+        const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+        const y = height - padding - ((d.value - minValue) / (maxValue - minValue || 1)) * (height - padding * 2);
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+                {/* Grid lines (simplified) */}
+                <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#eee" strokeWidth="1" />
+                <line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#eee" strokeWidth="1" />
+
+                {/* The Line */}
+                <polyline
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="3"
+                    points={points}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+
+                {/* Dots */}
+                {data.map((d, i) => {
+                    const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+                    const y = height - padding - ((d.value - minValue) / (maxValue - minValue || 1)) * (height - padding * 2);
+                    return (
+                        <g key={i} className="group cursor-pointer">
+                            <circle cx={x} cy={y} r="4" fill="white" stroke={color} strokeWidth="2" />
+                            {/* Tooltip on hover (simple SVG text) */}
+                            <text
+                                x={x}
+                                y={y - 10}
+                                textAnchor="middle"
+                                fontSize="12"
+                                fill="#666"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                {d.value.toLocaleString()}
+                            </text>
+                            <text
+                                x={x}
+                                y={height + 15}
+                                textAnchor="middle"
+                                fontSize="12"
+                                fill="#999"
+                            >
+                                {d.label}
+                            </text>
+                        </g>
+                    );
+                })}
+            </svg>
         </div>
     );
 };

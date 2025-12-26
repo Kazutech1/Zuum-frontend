@@ -55,6 +55,18 @@ const AdminZuumNewsPage = () => {
     fetchNews({ limit: 50, offset: 0 });
   }, [fetchNews]);
 
+  // Helper to get full image URL
+  const SERVER_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : '';
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (typeof imagePath !== 'string') return imagePath; // For blob URLs
+    if (imagePath.startsWith('http') || imagePath.startsWith('blob:')) return imagePath;
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    return `${SERVER_URL}/${cleanPath}`;
+  };
+
   const adminRoutes = {
     users: '/users',
     distribution: '/addistributions',
@@ -82,7 +94,7 @@ const AdminZuumNewsPage = () => {
       setFormData({
         ...formData,
         image: file,
-        imagePreview: URL.createObjectURL(file),
+        imagePreview: URL.createObjectURL(file), // Blob URL
       });
     }
   };
@@ -108,7 +120,7 @@ const AdminZuumNewsPage = () => {
       title: newsItem.title,
       content: newsItem.content,
       image: null,
-      imagePreview: newsItem.image,
+      imagePreview: newsItem.image_url, // pass existing path from backend (image_url)
     });
     resetError();
     setShowEditModal(true);
@@ -199,9 +211,8 @@ const AdminZuumNewsPage = () => {
       />
 
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-        }`}
+        className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+          }`}
       >
         {/* Mobile Header */}
         <div className="lg:hidden bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
@@ -336,9 +347,9 @@ const AdminZuumNewsPage = () => {
                   >
                     {/* Image */}
                     <div className="relative h-48 bg-gray-100 overflow-hidden">
-                      {newsItem.image ? (
+                      {newsItem.image_url ? (
                         <img
-                          src={newsItem.image}
+                          src={getImageUrl(newsItem.image_url)}
                           alt={newsItem.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
@@ -460,7 +471,7 @@ const AdminZuumNewsPage = () => {
                 {formData.imagePreview ? (
                   <div className="relative">
                     <img
-                      src={formData.imagePreview}
+                      src={getImageUrl(formData.imagePreview)}
                       alt="Preview"
                       className="w-full h-64 object-cover rounded-lg border border-gray-200"
                     />

@@ -31,7 +31,8 @@ const useAdminUserAnalytics = () => {
         try {
             const response = await axios.post("/admin/users/analytics", data);
             setSuccess(true);
-            return response.data;
+            // Return either the direct data or nested data depending on structure
+            return response.data?.data || response.data;
         } catch (err) {
             const errorMsg = handleError(err);
             setError(errorMsg);
@@ -56,6 +57,10 @@ const useAdminUserAnalytics = () => {
             setAnalytics(data);
             return data;
         } catch (err) {
+            // 404 is expected if no analytics exist yet, don't set global error
+            if (err.response && err.response.status === 404) {
+                return null;
+            }
             const errorMsg = handleError(err);
             setError(errorMsg);
             return null;
@@ -76,7 +81,7 @@ const useAdminUserAnalytics = () => {
         try {
             const response = await axios.put(`/admin/users/analytics/${profileId}`, data);
             setSuccess(true);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (err) {
             const errorMsg = handleError(err);
             setError(errorMsg);

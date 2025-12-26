@@ -15,7 +15,7 @@ const useAdminTerms = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get('/admin/terms-and-conditions');
+            const response = await axios.get('/admin/terms-and-condition');
             setTermsContent(response.data.content || '');
             setLastModified(response.data.lastModified);
             return response.data;
@@ -43,7 +43,7 @@ const useAdminTerms = () => {
         setError(null);
         setSuccess(false);
         try {
-            const response = await axios.put('/admin/terms-and-conditions', {
+            const response = await axios.put('/admin/terms-and-condition', {
                 content
             });
 

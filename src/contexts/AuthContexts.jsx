@@ -70,6 +70,21 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
+          // Check if we are on an admin page - if so, DO NOT redirect to user login
+          // The AdminContext should handle its own 401s
+          const currentPath = window.location.pathname;
+          if (currentPath.startsWith('/admin') ||
+            currentPath.startsWith('/adlog') ||
+            currentPath.startsWith('/adsin') ||
+            currentPath.startsWith('/adver') ||
+            currentPath.startsWith('/addistributions') ||
+            currentPath.startsWith('/users') ||
+            currentPath.startsWith('/adbeat') ||
+            currentPath.startsWith('/adpromotion')) {
+            console.debug('[AuthContext] 401 on admin route, ignoring user auth redirect');
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
 
           console.debug('[AuthContext] 401 detected, triggering logout');
