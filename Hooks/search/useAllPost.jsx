@@ -232,7 +232,80 @@ export const useUserPosts = () => {
 
 
 
+export const usePromotePost = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [responseData, setResponseData] = useState(null);
 
+  /**
+   * Promote a post
+   * @param {string} postId - ID of post
+   * @param {'audio'|'video'|'beat'} type - Type of content
+   * @param {number} durationDays - How many days to promote
+   */
+  const promotePost = async (postId, type, durationDays) => {
+    // 1. Validation
+    if (!postId || !type || !durationDays) {
+      throw new Error('Missing parameters');
+    }
+
+    // 2. Calculate Timeline (Current Time + Duration Days)
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + parseInt(durationDays));
+    const timeline = futureDate.toISOString(); // Format: 2026-04-21T01:38:25.431Z
+
+    const payload = {
+      postId: String(postId),
+      timeline: timeline,
+      type: type
+    };
+
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // 3. Send to correct API endpoint
+      const response = await axios.post('/payment/promote', payload, {
+        withCredentials: true,
+      });
+
+      setSuccess(true);
+      setResponseData(response.data); // Contains the actual 'amount' deducted
+      return response.data;
+
+    } catch (err) {
+      let errMsg = 'Something went wrong';
+      
+      if (err.response) {
+        // Handle specific status codes based on your docs
+        if (err.response.status === 406) {
+          errMsg = 'Insufficient funds in your wallet.';
+        } else if (err.response.status === 404) {
+          errMsg = 'Post not found.';
+        } else {
+          errMsg = err.response.data.message || 'Server error';
+        }
+      } else {
+        errMsg = err.message;
+      }
+      
+      setError(errMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setError(null);
+    setSuccess(false);
+    setResponseData(null);
+  };
+
+  return { promotePost, loading, error, success, responseData, reset };
+};
 
 
 
@@ -308,7 +381,7 @@ export const usePackages = () => {
 
 
 
-export const usePromotePost = () => {
+ const usePromtePost = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -477,35 +550,6 @@ export const useMassPromotion = () => {
         },
         withCredentials: true,
       });
-
-      setData(response.data);
-      console.log(response.data);
-      
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                         error.response?.data?.error || 
-                         error.message || 
-                         'Failed to create promotion';
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return {
-    createPromotion,
-    loading,
-    error,
-    data,
-    reset: () => {
-      setError(null);
-      setData(null);
-    }
-  };
-};
-
 
 
 
