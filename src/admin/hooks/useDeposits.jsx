@@ -109,22 +109,21 @@ export const useDeposits = () => {
   /**
    * Approve a deposit request
    * @param {number} depositId - The deposit request ID
-   * @param {string} txId - Transaction ID (required)
+   * @param {string} [txId] - Transaction ID (optional)
    */
   const approveDeposit = useCallback(async (depositId, txId) => {
-    if (!txId) {
-      setError("Transaction ID is required");
-      return false;
-    }
-
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const response = await axios.patch(
+      // payload matches API spec, but txId is now optional or handled by backend
+      const payload = {};
+      if (txId) payload.txId = txId;
+
+      const response = await axios.put(
         `/admin/wallet/deposits/${depositId}/approve`,
-        { txId },
+        payload,
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" }
@@ -137,7 +136,7 @@ export const useDeposits = () => {
         setDeposits(prev =>
           prev.map(deposit =>
             deposit.id === depositId
-              ? { ...deposit, status: "APPROVED", tx_id: txId }
+              ? { ...deposit, status: "APPROVED", tx_id: txId || deposit.tx_id }
               : deposit
           )
         );
@@ -163,7 +162,7 @@ export const useDeposits = () => {
     setSuccess(null);
 
     try {
-      const response = await axios.patch(
+      const response = await axios.put(
         `/admin/wallet/deposits/${depositId}/reject`,
         { reason },
         {

@@ -125,9 +125,11 @@ const AdminCryptoWalletPage = () => {
 
   // Deposits
   const handleApproveDeposit = async () => {
-    if (!selectedDeposit || !approvalTxId.trim()) return;
+    if (!selectedDeposit) return;
     setActionLoading('approve');
-    const success = await approveDeposit(selectedDeposit.id, approvalTxId.trim());
+    // txId is optional now, so we can pass null or the existing one if we had an edit field (which we removed)
+    // Or just pass nothing if the API doesn't need it. The hook handles optional second arg.
+    const success = await approveDeposit(selectedDeposit.id);
     setActionLoading(null);
     if (success) {
       setApprovalTxId('');
@@ -500,17 +502,9 @@ const AdminCryptoWalletPage = () => {
 
               {selectedDeposit.status === 'PENDING' && (
                 <div className="pt-4 border-t border-gray-100">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Verification</label>
-                  <input
-                    type="text"
-                    value={approvalTxId}
-                    onChange={(e) => setApprovalTxId(e.target.value)}
-                    placeholder="Enter Transaction Hash to Approve..."
-                    className="w-full mt-2 p-3 bg-white border border-gray-300 rounded-xl text-sm focus:border-[#2d7a63] focus:ring-1 focus:ring-[#2d7a63] outline-none transition-all placeholder-gray-400 text-gray-900"
-                  />
                   <div className="flex gap-3 mt-4">
                     <button onClick={handleDeclineDeposit} disabled={actionLoading} className="flex-1 py-3 border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl font-bold transition-colors">Reject</button>
-                    <button onClick={handleApproveDeposit} disabled={actionLoading || !approvalTxId} className="flex-[2] py-3 bg-[#2d7a63] text-white hover:bg-[#256652] rounded-xl font-bold shadow-lg shadow-[#2d7a63]/20 transition-all disabled:opacity-50 disabled:shadow-none">
+                    <button onClick={handleApproveDeposit} disabled={actionLoading} className="flex-[2] py-3 bg-[#2d7a63] text-white hover:bg-[#256652] rounded-xl font-bold shadow-lg shadow-[#2d7a63]/20 transition-all disabled:opacity-50 disabled:shadow-none">
                       {actionLoading ? 'Processing...' : 'Approve Deposit'}
                     </button>
                   </div>
