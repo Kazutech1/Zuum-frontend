@@ -227,133 +227,6 @@ export const useUserPosts = () => {
  * Hook for promoting posts (audio, video, or beats)
  * @returns {Object} Promotion functions and state
  */
-export const usePromotePost = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [responseData, setResponseData] = useState(null);
-
-  /**
-   * Promote a post
-   * @param {string} postId - ID of post to promote
-   * @param {'audio'|'video'|'beat'} type - Type of post
-   * @returns {Promise<Object>} Response data
-   */
-  const promotePost = async (postId, type) => {
-    // Validate input
-    if (!postId || !type) {
-      const errMsg = 'Missing required parameters';
-      console.error('[usePromotePost] Validation error:', errMsg);
-      throw new Error(errMsg);
-    }
-
-    const validTypes = ['audio', 'video', 'beat'];
-    if (!validTypes.includes(type)) {
-      const errMsg = `Invalid type: ${type}. Must be one of: ${validTypes.join(', ')}`;
-      console.error('[usePromotePost] Validation error:', errMsg);
-      throw new Error(errMsg);
-    }
-
-    const payload = {
-      postId: String(postId),
-      type,
-      timeline: new Date().toISOString()
-    };
-
-    console.log('[usePromotePost] Starting promotion with payload:', payload);
-
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
-    setResponseData(null);
-
-    try {
-      console.log('[usePromotePost] Sending request to /payment/promote');
-      const response = await axios.post('/payment/promote', payload, {
-        headers: getAuthHeaders(),
-        withCredentials: true,
-      });
-
-      console.log('[usePromotePost] Promotion successful:', response.data);
-      setSuccess(true);
-      setResponseData(response.data);
-      return response.data;
-
-    } catch (err) {
-      let errorDetails = {
-        timestamp: new Date().toISOString(),
-        payload,
-        error: null
-      };
-
-      if (err.response) {
-        // Server responded with error status
-        errorDetails = {
-          ...errorDetails,
-          status: err.response.status,
-          responseData: err.response.data,
-          headers: err.response.headers
-        };
-
-        console.error('[usePromotePost] Server error response:', errorDetails);
-
-        switch (err.response.status) {
-          case 400:
-            setError(err.response.data.message || 'Invalid request');
-            break;
-          case 404:
-            setError('Post not found');
-            break;
-          case 406:
-            setError('Insufficient funds');
-            break;
-          case 500:
-            setError('Server error: ' + (err.response.data.message || 'Please try again later'));
-            break;
-          default:
-            setError(`Error ${err.response.status}: ${err.response.data.message || 'Unknown error'}`);
-        }
-      } else if (err.request) {
-        // No response received
-        errorDetails.error = 'No response from server';
-        console.error('[usePromotePost] Network error:', errorDetails);
-        setError('Network error: Could not connect to server');
-      } else {
-        // Request setup error
-        errorDetails.error = err.message;
-        console.error('[usePromotePost] Request error:', errorDetails);
-        setError('Request failed: ' + err.message);
-      }
-
-      // Log complete error to error tracking service if available
-      // logErrorToService(errorDetails);
-
-      throw err; // Re-throw for component to handle
-    } finally {
-      setLoading(false);
-      console.log('[usePromotePost] Request completed');
-    }
-  };
-
-  /**
-   * Reset hook state
-   */
-  const reset = () => {
-    setError(null);
-    setSuccess(false);
-    setResponseData(null);
-  };
-
-  return {
-    promotePost,
-    loading,
-    error,
-    success,
-    responseData,
-    reset
-  };
-};
-
 
 
 
@@ -427,6 +300,119 @@ export const usePackages = () => {
   };
 };
 
+
+
+
+
+
+
+
+
+export const usePromotePost = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [responseData, setResponseData] = useState(null);
+
+  /**
+   * Promote a post
+   * @param {string|number} postId - ID of post to promote
+   * @param {'audio'|'video'|'beat'} type - Type of post
+   * @param {number} durationDays - Duration of promotion in days (e.g., 7)
+   */
+  const promotePost = async (postId, type, durationDays) => {
+    // 1. Validate input
+    if (!postId || !type || !durationDays) {
+      const errMsg = 'Missing required parameters: postId, type, or duration';
+      console.error('[usePromotePost] Validation error:', errMsg);
+      throw new Error(errMsg);
+    }
+
+    const validTypes = ['audio', 'video', 'beat'];
+    if (!validTypes.includes(type)) {
+      throw new Error(`Invalid type: ${type}`);
+    }
+
+    // 2. Calculate the Timeline (Future Date)
+    // The API expects a timestamp string. We calculate Current Date + Duration Days
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + Number(durationDays));
+    
+    // Format: ISO 8601 (e.g., "2026-04-21T01:38:25.431Z")
+    // This matches the backend requirement for a timestamptz
+    const timeline = futureDate.toISOString(); 
+
+    const payload = {
+      postId: String(postId),
+      timeline: timeline,
+      type: type
+    };
+
+    console.log('[usePromotePost] Sending payload:', payload);
+
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // 3. Updated URL to match your curl request: /api/payment/promote
+      const response = await axios.post('/payment/promote', payload, {
+        withCredentials: true, // If relyion cookies
+        headers: {
+            'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('[usePromotePost] Success:', response.data);
+      setSuccess(true);
+      setResponseData(response.data);
+      return response.data;
+
+    } catch (err) {
+      // ... Error handling logic remains the same ...
+      let errorMessage = 'An error occurred';
+      
+      if (err.response) {
+        console.error('[usePromotePost] Server Error:', err.response.data);
+        switch (err.response.status) {
+          case 406:
+            errorMessage = 'Insufficient funds';
+            break;
+          case 404:
+            errorMessage = 'Post not found';
+            break;
+          case 400:
+            errorMessage = err.response.data.message || 'Invalid request';
+            break;
+          default:
+            errorMessage = err.response.data.message || 'Server error';
+        }
+      } else {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setError(null);
+    setSuccess(false);
+    setResponseData(null);
+  };
+
+  return {
+    promotePost,
+    loading,
+    error,
+    success,
+    responseData,
+    reset
+  };
+};
 
 
 
