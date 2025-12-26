@@ -14,7 +14,8 @@ import {
   FileText,
   Download,
   Menu,
-  Filter
+  Filter,
+  Music2
 } from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import { useBeatPurchases } from '../hooks/useBeatPurchases';
@@ -116,19 +117,22 @@ const AdminBeatPurchasesPage = () => {
   };
 
   // Filter purchases based on search term and email filter
+  // Fetch purchases when email filter changes
+  useEffect(() => {
+    fetchPurchases(1, 10, emailFilter === 'all' ? null : emailFilter === 'sent');
+  }, [emailFilter, fetchPurchases]);
+
+  // Filter purchases based on search term (client-side search)
   const filteredPurchases = Array.isArray(purchases) ? purchases.filter(purchase => {
-    const matchesSearch = searchTerm === '' ||
+    if (!searchTerm) return true;
+
+    return (
       purchase.beat_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.artist_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      purchase.id?.toString().includes(searchTerm);
-
-    const matchesEmailFilter = emailFilter === 'all' ||
-      (emailFilter === 'sent' && purchase.send_email) ||
-      (emailFilter === 'pending' && !purchase.send_email);
-
-    return matchesSearch && matchesEmailFilter;
+      purchase.id?.toString().includes(searchTerm)
+    );
   }) : [];
 
   const adminRoutes = {
@@ -353,41 +357,35 @@ const AdminBeatPurchasesPage = () => {
                 {/* Desktop Table */}
                 <div className="hidden lg:block h-full overflow-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50 sticky top-0">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Purchase ID
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Beat / Artist
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Beat Title
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                          Artist
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Customer
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Amount
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          License
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                          Purchase Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-100">
                       {isLoading ? (
                         <tr>
-                          <td colSpan="6" className="px-6 py-10 text-center">
-                            <div className="flex justify-center items-center">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2d7a63]"></div>
-                              <span className="ml-3 text-gray-600">Loading purchases...</span>
+                          <td colSpan="6" className="px-6 py-12 text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2d7a63] mb-3"></div>
+                              <span className="text-sm text-gray-500">Loading purchases...</span>
                             </div>
                           </td>
                         </tr>
@@ -395,77 +393,106 @@ const AdminBeatPurchasesPage = () => {
                         filteredPurchases.map((purchase) => (
                           <tr
                             key={purchase.id}
-                            className="hover:bg-gray-50 transition duration-150"
+                            className="hover:bg-gray-50/80 transition-colors duration-150 group"
                           >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                              {purchase.id}
-                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 bg-[#2d7a63] bg-opacity-10 rounded-full flex items-center justify-center">
-                                  <User className="h-4 w-4 text-[#2d7a63]" />
+                                <div className="flex-shrink-0 h-10 w-10 bg-[#2d7a63]/10 rounded-lg flex items-center justify-center text-[#2d7a63]">
+                                  <Music2 size={20} />
                                 </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-900">{purchase.beat_title}</div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-semibold text-gray-900">{purchase.beat_title || 'Untitled Beat'}</div>
+                                  <div className="text-xs text-gray-500">{purchase.artist_name || 'Unknown Artist'}</div>
+                                  <div className="text-[10px] text-gray-400 mt-0.5">ID: {purchase.id}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                              {purchase.artist_name}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                              <div className="flex flex-col">
-                                <span className="font-medium text-gray-700">{purchase.customer_name}</span>
-                                <span className="text-xs text-gray-500">{purchase.customer_email}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
-                              ₦{purchase.purchase_amount?.toLocaleString()}
-                            </td>
+
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${purchase.license_uploaded
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'}`}
-                              >
-                                {purchase.license_status || (purchase.license_uploaded ? 'Licensed' : 'Pending')}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-900">{purchase.customer_name || 'Guest'}</span>
+                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Mail size={10} />
+                                  {purchase.customer_email}
+                                </span>
+                              </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
-                              <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                                ${purchase.status === 'Processing'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : purchase.delivered
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-700'}`}
-                              >
-                                {purchase.status}
+
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-gray-600">
+                                {purchase.purchase_date ? new Date(purchase.purchase_date).toLocaleDateString() : 'N/A'}
                               </span>
+                              <div className="text-xs text-gray-400">
+                                {purchase.purchase_date ? new Date(purchase.purchase_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button
-                                onClick={() => handleViewPurchase(purchase)}
-                                className="inline-flex items-center text-[#2d7a63] hover:text-[#245a4f] mr-4 transition duration-150"
-                              >
-                                <Eye size={16} className="mr-1" />
-                                <span className="hidden sm:inline">View</span>
-                              </button>
-                              {!purchase.license_uploaded && (
+
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-bold text-gray-900">
+                                ₦{purchase.purchase_amount?.toLocaleString() || '0'}
+                              </div>
+                              <div className="text-xs text-gray-500">{purchase.license_type}</div>
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-1.5">
+                                {/* License Status */}
+                                <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-xs font-medium ${purchase.license_uploaded
+                                    ? 'bg-green-50 text-green-700 border border-green-100'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                  }`}>
+                                  {purchase.license_uploaded ? <Check size={10} className="mr-1" /> : <AlertCircle size={10} className="mr-1" />}
+                                  {purchase.license_uploaded ? 'License Sent' : 'Needs License'}
+                                </span>
+
+                                {/* Email Status - Only show if separate from logic above or for extra clarity */}
+                                {!purchase.send_email && purchase.license_uploaded && (
+                                  <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                    Uploaded (No Email)
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex items-center justify-end gap-2">
+                                {!purchase.license_uploaded && (
+                                  <button
+                                    onClick={() => handleUploadClick(purchase)}
+                                    className="inline-flex items-center px-3 py-1.5 bg-[#2d7a63] text-white text-xs font-medium rounded-md hover:bg-[#245a4f] transition-colors shadow-sm shadow-emerald-100"
+                                    title="Upload License PDF"
+                                  >
+                                    <Download size={12} className="mr-1.5" />
+                                    Upload
+                                  </button>
+                                )}
+
                                 <button
-                                  onClick={() => handleUploadClick(purchase)}
-                                  className="inline-flex items-center text-blue-600 hover:text-blue-900 transition duration-150"
+                                  onClick={() => handleViewPurchase(purchase)}
+                                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                                  title="View Details"
                                 >
-                                  <Download size={16} className="mr-1" />
-                                  <span className="hidden sm:inline">Upload</span>
+                                  <Eye size={18} />
                                 </button>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500">
-                            {searchTerm ? 'No purchases found matching your search' : 'No purchases found'}
+                          <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                            <div className="flex flex-col items-center justify-center">
+                              <Search className="w-8 h-8 text-gray-300 mb-2" />
+                              <p className="text-sm">No purchases found matching your filters</p>
+                              {searchTerm && (
+                                <button
+                                  onClick={() => setSearchTerm('')}
+                                  className="mt-2 text-[#2d7a63] text-xs hover:underline"
+                                >
+                                  Clear search
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )}

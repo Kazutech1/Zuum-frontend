@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import { usePromotions } from '../hooks/usePromotions';
+import useAdminUser from '../hooks/user/useAdminUser';
 
 const AppPromotionsPage = () => {
     const navigate = useNavigate();
@@ -42,21 +43,30 @@ const AppPromotionsPage = () => {
         resetError
     } = usePromotions();
 
+    const { users, fetchUsers } = useAdminUser();
+
     // Initial fetch
     useEffect(() => {
         fetchAppPromotions();
-    }, [fetchAppPromotions]);
+        // Fetch a larger number of users to ensure we find matches. 
+        // 52 users total, so 1000 is safe for now.
+        fetchUsers({ limit: 1000 });
+    }, [fetchAppPromotions, fetchUsers]);
 
     // Derived filtered data (client-side filtering for search, API for others if needed)
     // Assuming API handles filters, but for search we might do it client side if API doesn't support it yet
+    // Derived filtered data
     const filteredPromotions = Array.isArray(appPromotions) ? appPromotions.filter(promo => {
+        const user = users.find(u => String(u.id) === String(promo.user_id));
         const matchesSearch = filters.search === '' ||
-            promo.promotion?.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
-            promo.user?.username?.toLowerCase().includes(filters.search.toLowerCase()) ||
-            String(promo.id).includes(filters.search);
+            String(promo.user_id).includes(filters.search) ||
+            String(promo.post_id).includes(filters.search) ||
+            String(promo.id).includes(filters.search) ||
+            promo.type?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            user?.email?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            user?.username?.toLowerCase().includes(filters.search.toLowerCase());
 
         const matchesActive = filters.active === 'all' || String(promo.active) === filters.active;
-        // Add type filter if available in data
 
         return matchesSearch && matchesActive;
     }) : [];
@@ -208,87 +218,101 @@ const AppPromotionsPage = () => {
                                 <thead>
                                     <tr className="bg-gray-50 border-b border-gray-100">
                                         <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Package / Post</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">User ID</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type / Post ID</th>
                                         <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</th>
                                         <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Timeline</th>
                                         <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan="7" className="p-8 text-center">
+                                            <td colSpan="8" className="p-8 text-center">
                                                 <Loader2 className="animate-spin mx-auto text-gray-300" size={32} />
                                                 <p className="text-gray-400 mt-2">Loading promotions...</p>
                                             </td>
                                         </tr>
                                     ) : filteredPromotions.length === 0 ? (
                                         <tr>
-                                            <td colSpan="7" className="p-8 text-center text-gray-500">
+                                            <td colSpan="8" className="p-8 text-center text-gray-500">
                                                 No promotions found matching your filters.
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredPromotions.map((promo) => (
-                                            <tr key={promo.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="p-4 text-sm font-medium text-gray-500">#{promo.id}</td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 overflow-hidden">
-                                                            {promo.user?.profile_image ? (
-                                                                <img src={promo.user.profile_image} alt="" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <User size={14} />
-                                                            )}
+                                        filteredPromotions.map((promo) => {
+                                            const user = users.find(u => String(u.id) === String(promo.user_id));
+                                            return (
+                                                <tr key={promo.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="p-4 text-sm font-medium text-gray-500">#{promo.id}</td>
+                                                    <td className="p-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 overflow-hidden">
+                                                                {user?.profile_image ? (
+                                                                    <img src={user.profile_image} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <User size={14} />
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-900">{user?.username || `User #${promo.user_id}`}</p>
+                                                                <p className="text-xs text-gray-500">{user?.email || 'No Email'}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">{promo.user?.username || 'Unknown User'}</p>
-                                                            <p className="text-xs text-gray-500">{promo.user?.email}</p>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-medium text-gray-900 capitalize">
+                                                                {promo.type}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <PlayCircle size={10} />
+                                                                Post #{promo.post_id}
+                                                            </span>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-gray-900">
-                                                            {promo.promotion?.title || 'Single Boost'}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                            {/* Icon based on type/category if available */}
-                                                            {promo.post_id ? <PlayCircle size={10} /> : <TrendingUp size={10} />}
-                                                            {promo.post_id ? `Post #${promo.post_id}` : 'Profile Promo'}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-sm font-bold text-gray-900">
-                                                    ₦{Number(promo.amount).toLocaleString()}
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${promo.active
+                                                    </td>
+                                                    <td className="p-4 text-sm font-bold text-gray-900">
+                                                        ₦{Number(promo.amount).toLocaleString()}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${promo.active
                                                             ? 'bg-emerald-100 text-emerald-800'
                                                             : 'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                        {promo.active ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-sm text-gray-500">
-                                                    {new Date(promo.created_at).toLocaleDateString()}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button
-                                                        onClick={() => handleStatusToggle(promo.id, promo.active)}
-                                                        className={`p-2 rounded-lg transition-colors ${promo.active
+                                                            }`}>
+                                                            {promo.active ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${promo.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                                                            promo.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                                'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                            {promo.status ? promo.status.charAt(0).toUpperCase() + promo.status.slice(1) : 'Pending'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-xs text-gray-500">
+                                                        <div className="flex flex-col">
+                                                            <span>Created: {new Date(promo.created_at).toLocaleDateString()}</span>
+                                                            <span className="text-gray-400">Exp: {new Date(promo.timeline).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <button
+                                                            onClick={() => handleStatusToggle(promo.id, promo.active)}
+                                                            className={`p-2 rounded-lg transition-colors ${promo.active
                                                                 ? 'text-red-600 hover:bg-red-50'
                                                                 : 'text-emerald-600 hover:bg-emerald-50'
-                                                            }`}
-                                                        title={promo.active ? "Deactivate" : "Activate"}
-                                                    >
-                                                        {promo.active ? <X size={18} /> : <Check size={18} />}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                                }`}
+                                                            title={promo.active ? "Deactivate" : "Activate"}
+                                                        >
+                                                            {promo.active ? <X size={18} /> : <Check size={18} />}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>

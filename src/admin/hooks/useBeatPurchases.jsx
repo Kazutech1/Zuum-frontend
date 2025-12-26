@@ -32,7 +32,7 @@ export const useBeatPurchases = () => {
         page,
         limit
       };
-      
+
       if (sendEmailFilter !== null) {
         params.send_email = sendEmailFilter;
       }
@@ -49,31 +49,19 @@ export const useBeatPurchases = () => {
       console.log('Beat purchases response:', response.data);
 
       if (response.status === 200) {
-        // Handle different possible response formats
-        let purchasesData = [];
-        if (response.data) {
-          if (Array.isArray(response.data)) {
-            purchasesData = response.data;
-          } else if (response.data.data && Array.isArray(response.data.data)) {
-            purchasesData = response.data.data;
-          } else if (response.data.purchases && Array.isArray(response.data.purchases)) {
-            purchasesData = response.data.purchases;
-          } else if (response.data.results && Array.isArray(response.data.results)) {
-            purchasesData = response.data.results;
-          }
-        }
-        
+        // API returns data in response.data.data
+        const purchasesData = response.data.data || [];
+
         console.log('Processed purchases data:', purchasesData);
-        
+
         // Transform the data to match our expected format
         const transformedPurchases = purchasesData.map(purchase => ({
           id: purchase.id,
           beat_title: purchase.beat_name,
-          artist_name: `${purchase.firstname} ${purchase.lastname}`,
+          artist_name: `${purchase.firstname || ''} ${purchase.lastname || ''}`.trim(),
           customer_name: purchase.customer_name,
           customer_email: purchase.customer_email,
           license_type: purchase.license_type || 'N/A',
-          // Use raw amount from API (e.g. ₦10000), format in the UI
           purchase_amount: purchase.amount_paid,
           purchase_date: purchase.purchase_date,
           send_email: purchase.send_email,
@@ -82,21 +70,17 @@ export const useBeatPurchases = () => {
           delivered: purchase.delivered,
           license_status: purchase.license_status
         }));
-        
+
         setPurchases(transformedPurchases);
-        
+
         // Handle pagination data
         if (response.data && response.data.pagination) {
+          const { page, total, limit } = response.data.pagination;
           setPagination({
-            currentPage: response.data.pagination.page || 1,
-            total: response.data.pagination.total || transformedPurchases.length,
-            totalPages: response.data.pagination.has_more ? response.data.pagination.page + 1 : response.data.pagination.page
-          });
-        } else if (response.data && response.data.meta) {
-          setPagination({
-            currentPage: response.data.meta.current_page || 1,
-            total: response.data.meta.total || transformedPurchases.length,
-            totalPages: response.data.meta.last_page || 1
+            currentPage: Number(page) || 1,
+            total: Number(total) || 0,
+            // Calculate total pages based on total / limit
+            totalPages: Math.ceil((Number(total) || 0) / (Number(limit) || 10))
           });
         } else {
           // Default pagination if none provided
@@ -111,7 +95,7 @@ export const useBeatPurchases = () => {
       console.error('Beat purchases fetch error:', err);
       console.error('Error response:', err.response?.data);
       console.error('Error status:', err.response?.status);
-      
+
       // If API is not available, use mock data for development
       if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
         console.log('API not available, using mock data for development');
@@ -156,7 +140,7 @@ export const useBeatPurchases = () => {
             status: 'pending'
           }
         ];
-        
+
         setPurchases(mockPurchases);
         setPagination({
           currentPage: 1,
@@ -204,17 +188,17 @@ export const useBeatPurchases = () => {
 
       if (response.status === 200) {
         setUploadSuccess(true);
-        
+
         // Update the local state to reflect the change
-        setPurchases(prev => prev.map(p => 
-          p.id === beatPurchaseId 
+        setPurchases(prev => prev.map(p =>
+          p.id === beatPurchaseId
             ? { ...p, license_uploaded: true, send_email: sendEmail, license_status: 'Uploaded' }
             : p
         ));
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setUploadSuccess(false), 3000);
-        
+
         return true;
       }
       return false;

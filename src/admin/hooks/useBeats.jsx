@@ -70,7 +70,7 @@ export const useBeats = () => {
       return beatsData;
     } catch (err) {
       console.error('Fetch beats error:', err);
-      
+
       if (err.response) {
         switch (err.response.status) {
           case 400:
@@ -91,7 +91,7 @@ export const useBeats = () => {
       } else {
         setError('Network error – please check your connection');
       }
-      
+
       setBeats([]);
       return [];
     } finally {
@@ -132,7 +132,7 @@ export const useBeats = () => {
       const updatedBeat = response.data?.data || response.data;
 
       // Update local state
-      setBeats(prev => prev.map(beat => 
+      setBeats(prev => prev.map(beat =>
         beat.id === parseInt(postId) || beat.id === postId
           ? { ...beat, status, ...updatedBeat }
           : beat
@@ -141,7 +141,7 @@ export const useBeats = () => {
       return updatedBeat;
     } catch (err) {
       console.error('Update beat status error:', err);
-      
+
       if (err.response) {
         switch (err.response.status) {
           case 400:
@@ -165,7 +165,7 @@ export const useBeats = () => {
       } else {
         setError('Network error – please check your connection');
       }
-      
+
       return null;
     } finally {
       setIsLoading(false);
@@ -192,7 +192,7 @@ export const useBeats = () => {
       });
 
       // Remove from local state
-      setBeats(prev => prev.filter(beat => 
+      setBeats(prev => prev.filter(beat =>
         beat.id !== parseInt(postId) && beat.id !== postId
       ));
 
@@ -205,7 +205,7 @@ export const useBeats = () => {
       return true;
     } catch (err) {
       console.error('Delete beat error:', err);
-      
+
       if (err.response) {
         switch (err.response.status) {
           case 401:
@@ -226,7 +226,7 @@ export const useBeats = () => {
       } else {
         setError('Network error – please check your connection');
       }
-      
+
       return false;
     } finally {
       setIsLoading(false);
