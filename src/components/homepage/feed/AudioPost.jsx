@@ -1,15 +1,14 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaMusic,
   FaLock,
   FaShoppingCart,
-  FaHeart,
   FaComment,
-  FaShareAlt,
-  FaBroadcastTower,
   FaShare,
-  FaTrash
+  FaTrash,
+  FaBroadcastTower,
 } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
 import a from "../../../assets/icons/Mask group1.svg";
@@ -20,9 +19,7 @@ import ReactionButton from "../../details/Reactions";
 import ShareModal from "../../details/Share";
 import CommentModal from "../../details/Comments";
 import StreamingPlatformsModal from "../../details/Streams";
-import useProfile from "../../../../Hooks/useProfile";
 import useAudioPosts, { useDeleteAudioPost } from "../../../../Hooks/audioPosts/useCreateAudio";
-import { Share, Share2 } from "lucide-react";
 
 const AudioPost = React.forwardRef(({
   post,
@@ -51,16 +48,13 @@ const AudioPost = React.forwardRef(({
 
   const { deleteAudioPost, loading: isDeleting } = useDeleteAudioPost();
 
-
-
   const handleDelete = async (e) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
       await deleteAudioPost(post.id);
-      window.location.reload(); // Simple reload to refresh feed for now
+      window.location.reload(); 
     }
   };
-
 
   const handleBeatAction = (e) => {
     e.stopPropagation();
@@ -96,6 +90,7 @@ const AudioPost = React.forwardRef(({
 
   const contentInfo = getContentInfo();
 
+  // --- RENDER: BEAT POST ---
   if (isBeat) {
     return (
       <div
@@ -111,8 +106,10 @@ const AudioPost = React.forwardRef(({
         />
 
         {/* Beat content */}
-        <div className="relative z-10 w-full h-full flex flex-col items-center  justify-center p-6 text-center">
-          {/* Promotional badge */}
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-6 text-center">
+          
+          {/* Promotional badge for Beats */}
+          {/* Note: Your original code had this hardcoded, but you can make it dynamic too if needed */}
           <div className="absolute top-10 left-4 flex items-center mt-10 bg-yellow-500/90 text-black px-3 py-1 rounded-full text-xs font-bold">
             <MdCampaign className="mr-1" />
             PROMOTIONAL BEAT
@@ -133,7 +130,6 @@ const AudioPost = React.forwardRef(({
             <h2 className="text-2xl font-bold text-white mb-2">{contentInfo.title}</h2>
             <p className="text-gray-300 mb-4">{contentInfo.artist}</p>
 
-
             {/* Price/CTA */}
             <div className="bg-black/70 backdrop-blur-sm p-4 rounded-xl border border-gray-700">
               <div className="flex items-center justify-between mb-3">
@@ -146,7 +142,6 @@ const AudioPost = React.forwardRef(({
                 </span>
               </div>
               <button
-                // onClick={handlePurchaseClick}
                 className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-3 px-6 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity"
               >
                 <FaShoppingCart className="mr-2" />
@@ -176,8 +171,6 @@ const AudioPost = React.forwardRef(({
           </div>
         </div>
 
-
-
         {/* Share Modal */}
         <ShareModal
           isOpen={isShareModalOpen}
@@ -190,7 +183,7 @@ const AudioPost = React.forwardRef(({
     );
   }
 
-  // Regular Audio Post
+  // --- RENDER: REGULAR AUDIO POST ---
   return (
     <div
       {...props}
@@ -209,21 +202,7 @@ const AudioPost = React.forwardRef(({
       <div className="relative z-10 w-full h-full">
         {/* Top bar */}
         <div className="absolute top-8 sm:top-4 left-0 right-0 p-4 z-30 flex justify-between items-center">
-          {/* <div className="flex items-center space-x-2">
-            <FaMusic className="text-white text-xl" />
-            <span className="text-white font-semibold text-sm">
-              {contentInfo.artist}
-            </span>
-            <span className={`text-xs px-2 py-0.5 rounded-full text-white ${contentInfo.badgeColor}`}>
-              {contentInfo.badgeText}
-            </span>
-          </div> */}
-          {/* <img
-            src={b}
-            className="w-6 h-6 cursor-pointer"
-            alt="Options"
-            onClick={(e) => e.stopPropagation()}
-          /> */}
+          {/* Top Bar content if needed */}
         </div>
 
         {/* Cover image - fills entire space */}
@@ -252,15 +231,32 @@ const AudioPost = React.forwardRef(({
                 alt="Profile"
                 className="max-w-10 max-h-10 sm:max-w-12 sm:max-h-12 rounded-full border-2 border-white bg-gray-800"
               />
+              
+              {/* --- UPDATED SECTION: User Info with Promoted Tag --- */}
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-white text-sm sm:text-base truncate">{post.username || post.artist}</h4>
-                <p className="text-white text-xs sm:text-sm truncate">{contentInfo.title}</p>
+                
+                {/* PROMOTED AUDIO CHECK */}
+                {post.promoted && (
+                  <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                    Promoted Audio
+                  </p>
+                )}
+
+                <h4 className="font-bold text-white text-sm sm:text-base truncate">
+                  {post.username || post.artist}
+                </h4>
+                <p className="text-white text-xs sm:text-sm truncate">
+                  {contentInfo.title}
+                </p>
               </div>
+              {/* --- END UPDATED SECTION --- */}
+
             </div>
           </div>
 
-          {/* Redesigned Side Actions Container */}
+          {/* Side Actions Container */}
           <div className="flex flex-col items-center space-y-6 sm:space-y-8 ml-4">
+            
             {/* Like/Reaction Button */}
             <div className="flex flex-col items-center group">
               <div className="relative">
@@ -272,7 +268,6 @@ const AudioPost = React.forwardRef(({
                     customClass="text-white text-lg sm:text-xl"
                   />
                 </div>
-                {/* Reaction label */}
                 <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                     Like
@@ -293,8 +288,6 @@ const AudioPost = React.forwardRef(({
                     <FaComment className="text-white text-lg sm:text-xl" />
                   </button>
                 </CommentModal>
-
-                {/* Comment label */}
                 <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                   <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                     {data?.comments?.length || 0}
@@ -312,7 +305,6 @@ const AudioPost = React.forwardRef(({
                 >
                   <FaBroadcastTower className="text-white text-lg sm:text-xl" />
                 </button>
-                {/* Streaming label */}
                 <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                     Stream
@@ -333,7 +325,6 @@ const AudioPost = React.forwardRef(({
                 >
                   <FaShare className="text-white text-lg sm:text-xl" />
                 </button>
-                {/* Share label */}
                 <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                     Share
@@ -342,7 +333,6 @@ const AudioPost = React.forwardRef(({
               </div>
             </div>
 
-            {/* Delete Button (Owner Only) */}
             {/* Delete Button (Owner Only) */}
             {(profile?.id === post.profile_id || profile?.id === Number(post.profile_id)) && (
               <div className="flex flex-col items-center group">
@@ -354,7 +344,6 @@ const AudioPost = React.forwardRef(({
                   >
                     <FaTrash className={`text-white text-lg sm:text-xl ${isDeleting ? 'opacity-50' : ''}`} />
                   </button>
-                  {/* Delete label */}
                   <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <span className="text-white text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                       {isDeleting ? 'Deleting...' : 'Delete'}
