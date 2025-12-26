@@ -13,10 +13,14 @@ import {
   Menu,
   Filter,
   TrendingUp,
-  Calendar
+  Calendar,
+  Plus,
+  Music,
+  Headphones
 } from 'lucide-react';
 import AdminSidebar from '../components/Sidebar';
 import { usePromotions } from '../hooks/usePromotions';
+import { useUserPosts, usePromotePost } from '../../../Hooks/search/useAllPost';
 
 const AdminPromotionsPage = () => {
   const navigate = useNavigate();
@@ -46,6 +50,54 @@ const AdminPromotionsPage = () => {
     updatePromotionStatus,
     resetError
   } = usePromotions();
+
+  // Create Promotion Logic
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createActiveTab, setCreateActiveTab] = useState('audio'); // 'audio', 'beat'
+  const [selectedContent, setSelectedContent] = useState(null);
+  const [promotionDuration, setPromotionDuration] = useState(7);
+
+  const { beats, audios, loading: postsLoading } = useUserPosts();
+  const {
+    promotePost,
+    loading: promoting,
+    error: promoteError,
+    success: promoteSuccess,
+    reset: resetPromote
+  } = usePromotePost();
+
+  const handleCreateClick = () => {
+    setIsCreateModalOpen(true);
+    resetPromote();
+    setSelectedContent(null);
+  };
+
+  const handlePromoteSubmit = async () => {
+    if (!selectedContent) return;
+    console.log('Promoting Post Payload:', {
+      postId: selectedContent.id,
+      type: selectedContent.type,
+      duration: promotionDuration
+    });
+    try {
+      await promotePost(selectedContent.id, selectedContent.type, promotionDuration);
+      // Wait a bit then close modal and refresh promotions list
+      setTimeout(() => {
+        setIsCreateModalOpen(false);
+        fetchPromotions();
+      }, 2000);
+    } catch (e) {
+      console.error("Promotion failed", e);
+    }
+  };
+
+  const getContentList = () => {
+    switch (createActiveTab) {
+      case 'audio': return audios || [];
+      case 'beat': return beats || [];
+      default: return [];
+    }
+  };
 
   // Filter promotions based on search term and filters
   const filteredPromotions = Array.isArray(promotions) ? promotions.filter(promotion => {
@@ -253,6 +305,16 @@ const AdminPromotionsPage = () => {
                 <div className="mb-4 md:mb-0">
                   <h1 className="text-3xl font-bold text-gray-900">Promotion Management</h1>
                   <p className="mt-2 text-gray-600">Manage promotional campaigns and their statuses</p>
+                </div>
+
+                <div className="mb-4 md:mb-0 ml-auto mr-4">
+                  <button
+                    onClick={handleCreateClick}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#2d7a63] text-white rounded-lg hover:bg-[#245a4f] transition-colors shadow-sm"
+                  >
+                    <Plus size={18} />
+                    New Promotion
+                  </button>
                 </div>
 
                 {/* Search bar and filters */}
@@ -682,9 +744,9 @@ const AdminPromotionsPage = () => {
                 <h3 className="mt-4 text-lg font-medium text-gray-900">{selectedPromotion.title}</h3>
                 <p className="mt-1 text-sm text-gray-500">by {selectedPromotion.customer_name}</p>
                 <span className={`mt-2 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${selectedPromotion.status === 'active' ? 'bg-green-100 text-green-800' :
-                    selectedPromotion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      selectedPromotion.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
+                  selectedPromotion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    selectedPromotion.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      'bg-red-100 text-red-800'
                   }`}>
                   {selectedPromotion.status?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown'}
                 </span>
@@ -740,6 +802,147 @@ const AdminPromotionsPage = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Promotion Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Create New Promotion</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d7a63] p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Type Selection */}
+              <div className="flex gap-4 mb-6 border-b border-gray-200">
+                <button
+                  onClick={() => { setCreateActiveTab('audio'); setSelectedContent(null); }}
+                  className={`flex items-center gap-2 pb-3 px-2 transition-colors border-b-2 ${createActiveTab === 'audio'
+                    ? 'border-[#2d7a63] text-[#2d7a63] font-medium'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <Music size={18} /> Audio
+                </button>
+                <button
+                  onClick={() => { setCreateActiveTab('beat'); setSelectedContent(null); }}
+                  className={`flex items-center gap-2 pb-3 px-2 transition-colors border-b-2 ${createActiveTab === 'beat'
+                    ? 'border-[#2d7a63] text-[#2d7a63] font-medium'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <Headphones size={18} /> Beats
+                </button>
+              </div>
+
+              {/* Content List */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Select Content to Promote</h3>
+                <div className="border rounded-lg max-h-60 overflow-y-auto bg-gray-50">
+                  {postsLoading.all ? (
+                    <div className="p-8 text-center text-gray-500">Loading...</div>
+                  ) : getContentList().length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">No {createActiveTab} posts found.</div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {getContentList().map(item => (
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedContent({ ...item, type: createActiveTab })}
+                          className={`p-3 flex items-center gap-3 cursor-pointer transition-colors ${selectedContent?.id === item.id
+                            ? 'bg-[#2d7a63]/10 border-l-4 border-[#2d7a63]'
+                            : 'hover:bg-gray-100 border-l-4 border-transparent'
+                            }`}
+                        >
+                          <div className="h-10 w-10 bg-gray-200 rounded overflow-hidden flex-shrink-0 relative">
+                            <img
+                              src={item.cover_photo || 'https://via.placeholder.com/40'}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                            {item.is_promoted && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-white bg-[#2d7a63] px-1 rounded">PROMOTED</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                              {item.is_promoted && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800 border border-green-200">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500">Starts at ₦{Number(5000).toLocaleString()}/day</p>
+                          </div>
+                          {selectedContent?.id === item.id && <Check size={16} className="text-[#2d7a63]" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Duration Slider */}
+              <div className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700">Duration</label>
+                  <span className="text-[#2d7a63] font-bold">{promotionDuration} Days</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="30"
+                  value={promotionDuration}
+                  onChange={(e) => setPromotionDuration(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2d7a63]"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1 Day</span>
+                  <span>30 Days</span>
+                </div>
+              </div>
+
+              {/* Feedback messages */}
+              {promoteError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
+                  {promoteError}
+                </div>
+              )}
+              {promoteSuccess && (
+                <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+                  Promotion submitted successfully!
+                </div>
+              )}
+
+              {/* Footer Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  disabled={promoting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePromoteSubmit}
+                  disabled={!selectedContent || promoting || promoteSuccess}
+                  className="px-4 py-2 bg-[#2d7a63] text-white rounded-lg hover:bg-[#245a4f] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {promoting ? 'Processing...' : 'Promote Post'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

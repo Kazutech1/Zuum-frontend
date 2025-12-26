@@ -236,7 +236,6 @@ const AdminUserAnalyticsPage = () => {
       revenue: toNumber(form.revenue, currentAnalytics?.revenue || 0),
       listeners: toNumber(form.listeners, currentAnalytics?.listeners || 0),
       engagement: toNumber(form.engagement, currentAnalytics?.engagement || 0),
-      engagement: toNumber(form.engagement, currentAnalytics?.engagement || 0),
       top_songs: songs.map(s => s.id), // Send only IDs
       top_countries: countries,
     };
@@ -378,7 +377,7 @@ const AdminUserAnalyticsPage = () => {
               </div>
             )}
 
-             {/* Content */}
+            {/* Content */}
             <div className="space-y-6">
               {/* Edit form */}
               {isEditing && (
@@ -386,7 +385,7 @@ const AdminUserAnalyticsPage = () => {
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 opacity-50"></div>
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                       Manual Override
+                      Manual Override
                     </h2>
                     <div className="flex gap-2">
                       <button
@@ -686,7 +685,7 @@ const AdminUserAnalyticsPage = () => {
                                 height: `${item.value}%`,
                               }}
                             >
-                                <div className="absolute top-0 left-0 w-full h-[1px] bg-white/30"></div>
+                              <div className="absolute top-0 left-0 w-full h-[1px] bg-white/30"></div>
                             </div>
                           </div>
                           <div className="text-xs font-medium text-slate-500 mt-3 group-hover:text-slate-300 transition-colors">

@@ -56,18 +56,18 @@ export const useUserPosts = () => {
     try {
       setLoading(prev => ({ ...prev, beats: true }));
       setError(prev => ({ ...prev, beats: null }));
-      
+
       const response = await axios.get('/beat/user-posts', {
         headers: getAuthHeaders(),
         withCredentials: true,
       });
 
       // Handle both array and object response formats
-      let beatsData = Array.isArray(response.data) ? response.data : 
-                     response.data.posts || response.data.data || [];
-      
+      let beatsData = Array.isArray(response.data) ? response.data :
+        response.data.posts || response.data.data || [];
+
       beatsData = addTypeToPosts(beatsData, 'beat');
-      
+
       setPosts(prev => ({
         ...prev,
         beats: beatsData,
@@ -88,17 +88,17 @@ export const useUserPosts = () => {
     try {
       setLoading(prev => ({ ...prev, videos: true }));
       setError(prev => ({ ...prev, videos: null }));
-      
+
       const response = await axios.get('/video/user', {
         headers: getAuthHeaders(),
         withCredentials: true,
       });
 
-      let videoPosts = Array.isArray(response.data) ? response.data : 
-                      response.data.posts || response.data.data || [];
-      
+      let videoPosts = Array.isArray(response.data) ? response.data :
+        response.data.posts || response.data.data || [];
+
       videoPosts = addTypeToPosts(videoPosts, 'video');
-      
+
       setPosts(prev => ({
         ...prev,
         videos: videoPosts,
@@ -119,17 +119,17 @@ export const useUserPosts = () => {
     try {
       setLoading(prev => ({ ...prev, audios: true }));
       setError(prev => ({ ...prev, audios: null }));
-      
+
       const response = await axios.get('/audio/user', {
         headers: getAuthHeaders(),
         withCredentials: true,
       });
 
-      let audioPosts = Array.isArray(response.data) ? response.data : 
-                      response.data.posts || response.data.data || [];
-      
+      let audioPosts = Array.isArray(response.data) ? response.data :
+        response.data.posts || response.data.data || [];
+
       audioPosts = addTypeToPosts(audioPosts, 'audio');
-      
+
       setPosts(prev => ({
         ...prev,
         audios: audioPosts,
@@ -160,11 +160,11 @@ export const useUserPosts = () => {
   const hasError = error.beats || error.videos || error.audios;
 
   // Combined empty state
-  const isEmpty = !isLoading && 
-                 !hasError && 
-                 posts.beats.length === 0 && 
-                 posts.videos.length === 0 && 
-                 posts.audios.length === 0;
+  const isEmpty = !isLoading &&
+    !hasError &&
+    posts.beats.length === 0 &&
+    posts.videos.length === 0 &&
+    posts.audios.length === 0;
 
   // Refetch all
   const refetchAll = async () => {
@@ -176,10 +176,10 @@ export const useUserPosts = () => {
     beats: posts.beats,
     videos: posts.videos,
     audios: posts.audios,
-    
+
     // Combined collection (all posts mixed together)
     allPosts: posts.allPosts,
-    
+
     // Loading states
     loading: {
       beats: loading.beats,
@@ -187,7 +187,7 @@ export const useUserPosts = () => {
       audios: loading.audios,
       all: isLoading
     },
-    
+
     // Error states
     error: {
       beats: error.beats,
@@ -195,10 +195,10 @@ export const useUserPosts = () => {
       audios: error.audios,
       any: hasError
     },
-    
+
     // Utility states
     isEmpty,
-    
+
     // Refetch functions
     refetch: {
       beats: fetchUserBeats,
@@ -261,6 +261,8 @@ export const usePromotePost = () => {
       type: type
     };
 
+    console.log('[usePromotePost] Final Payload:', payload);
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -277,7 +279,7 @@ export const usePromotePost = () => {
 
     } catch (err) {
       let errMsg = 'Something went wrong';
-      
+
       if (err.response) {
         // Handle specific status codes based on your docs
         if (err.response.status === 406) {
@@ -290,7 +292,7 @@ export const usePromotePost = () => {
       } else {
         errMsg = err.message;
       }
-      
+
       setError(errMsg);
       throw err;
     } finally {
@@ -341,16 +343,16 @@ export const usePackages = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get('/packages', {
         headers: getAuthHeaders(),
         withCredentials: true,
       });
 
       // Handle both array and object response formats
-      let packagesData = Array.isArray(response.data) ? response.data : 
-                       response.data.packages || response.data.data || [];
-      
+      let packagesData = Array.isArray(response.data) ? response.data :
+        response.data.packages || response.data.data || [];
+
       setPackages(packagesData);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Failed to fetch packages');
@@ -381,111 +383,7 @@ export const usePackages = () => {
 
 
 
- const usePromtePost = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [responseData, setResponseData] = useState(null);
 
-  /**
-   * Promote a post
-   * @param {string|number} postId - ID of post to promote
-   * @param {'audio'|'video'|'beat'} type - Type of post
-   * @param {number} durationDays - Duration of promotion in days (e.g., 7)
-   */
-  const promotePost = async (postId, type, durationDays) => {
-    // 1. Validate input
-    if (!postId || !type || !durationDays) {
-      const errMsg = 'Missing required parameters: postId, type, or duration';
-      console.error('[usePromotePost] Validation error:', errMsg);
-      throw new Error(errMsg);
-    }
-
-    const validTypes = ['audio', 'video', 'beat'];
-    if (!validTypes.includes(type)) {
-      throw new Error(`Invalid type: ${type}`);
-    }
-
-    // 2. Calculate the Timeline (Future Date)
-    // The API expects a timestamp string. We calculate Current Date + Duration Days
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + Number(durationDays));
-    
-    // Format: ISO 8601 (e.g., "2026-04-21T01:38:25.431Z")
-    // This matches the backend requirement for a timestamptz
-    const timeline = futureDate.toISOString(); 
-
-    const payload = {
-      postId: String(postId),
-      timeline: timeline,
-      type: type
-    };
-
-    console.log('[usePromotePost] Sending payload:', payload);
-
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      // 3. Updated URL to match your curl request: /api/payment/promote
-      const response = await axios.post('/payment/promote', payload, {
-        withCredentials: true, // If relyion cookies
-        headers: {
-            'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('[usePromotePost] Success:', response.data);
-      setSuccess(true);
-      setResponseData(response.data);
-      return response.data;
-
-    } catch (err) {
-      // ... Error handling logic remains the same ...
-      let errorMessage = 'An error occurred';
-      
-      if (err.response) {
-        console.error('[usePromotePost] Server Error:', err.response.data);
-        switch (err.response.status) {
-          case 406:
-            errorMessage = 'Insufficient funds';
-            break;
-          case 404:
-            errorMessage = 'Post not found';
-            break;
-          case 400:
-            errorMessage = err.response.data.message || 'Invalid request';
-            break;
-          default:
-            errorMessage = err.response.data.message || 'Server error';
-        }
-      } else {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const reset = () => {
-    setError(null);
-    setSuccess(false);
-    setResponseData(null);
-  };
-
-  return {
-    promotePost,
-    loading,
-    error,
-    success,
-    responseData,
-    reset
-  };
-};
 
 
 
@@ -510,7 +408,7 @@ export const useMassPromotion = () => {
 
       // Prepare form data for file uploads
       const postData = new FormData();
-      
+
       // Add common fields
       postData.append('category', formData.category);
       postData.append('package_id', formData.package_id);
@@ -551,6 +449,25 @@ export const useMassPromotion = () => {
         withCredentials: true,
       });
 
+      setLoading(false);
+      setData(response.data);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Promotion failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    createPromotion,
+    loading,
+    error,
+    data
+  };
+};
+
 
 
 
@@ -575,7 +492,7 @@ export const useUserPromotions = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get('/packages/myPromotions', {
         headers: getAuthHeaders(),
         params: {
@@ -589,7 +506,7 @@ export const useUserPromotions = () => {
       // Handle the actual API response structure
       const promotionsData = response.data.results || [];
       const total = response.data.total || 0;
-      
+
       setPromotions(promotionsData);
       setPagination(prev => ({
         ...prev,

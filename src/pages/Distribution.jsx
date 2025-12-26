@@ -242,14 +242,12 @@ const Distribution = () => {
         boomplay: "https://boomplay.com",
         audio_mark: "https://audiomack.com",
       }
-      
+
       await createDistributionRequest({
         caption: formData.title.trim(),
         description: formData.lyrics.trim() || `Music release: ${formData.title}`,
         genre: formData.genre,
         social_links: socialLinks,
-        audio_upload: primaryAudioFile,
-        cover_photo: formData.coverArt,
         // Pass all form data so it can be included in details object
         ...formData,
         // Override with the processed values
@@ -339,19 +337,19 @@ const Distribution = () => {
   // Render success state
   const renderSuccess = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 md:p-8 text-center">
-      <div 
+      <div
         className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 md:mb-8 rounded-full flex items-center justify-center"
         style={{ backgroundColor: 'var(--color-bg-secondary)' }}
       >
         <CheckCircle className="w-10 h-10 md:w-12 md:h-12" style={{ color: 'var(--color-primary)' }} />
       </div>
-      <h2 
+      <h2
         className="text-2xl md:text-3xl font-bold mb-3 md:mb-4"
         style={{ color: 'var(--color-text-primary)' }}
       >
         Submission Successful!
       </h2>
-      <p 
+      <p
         className="mb-6 md:mb-8 text-base md:text-lg"
         style={{ color: 'var(--color-text-secondary)' }}
       >
@@ -360,7 +358,7 @@ const Distribution = () => {
       <button
         onClick={handleReset}
         className="px-6 py-3 rounded-lg transition-colors text-base md:text-lg font-medium"
-        style={{ 
+        style={{
           backgroundColor: 'var(--color-primary)',
           color: 'var(--color-text-on-primary)'
         }}
@@ -387,20 +385,19 @@ const Distribution = () => {
           {[1, 2, 3, 4, 5].map((step) => (
             <div
               key={step}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${
-                currentStep === step ? "w-4 h-4" : currentStep > step ? "" : ""
-              }`}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${currentStep === step ? "w-4 h-4" : currentStep > step ? "" : ""
+                }`}
               style={{
-                backgroundColor: currentStep === step 
-                  ? 'var(--color-primary)' 
-                  : currentStep > step 
-                    ? 'var(--color-primary)/60' 
+                backgroundColor: currentStep === step
+                  ? 'var(--color-primary)'
+                  : currentStep > step
+                    ? 'var(--color-primary)/60'
                     : 'var(--color-border)'
               }}
             ></div>
           ))}
         </div>
-        <div 
+        <div
           className="text-center md:hidden mb-4 text-sm font-medium"
           style={{ color: 'var(--color-text-secondary)' }}
         >
@@ -414,13 +411,13 @@ const Distribution = () => {
         {/* Desktop progress indicator (icons) */}
         <div className="hidden md:flex justify-between items-center mb-6 relative">
           {/* Progress line */}
-          <div 
+          <div
             className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 z-0"
             style={{ backgroundColor: 'var(--color-border)' }}
           ></div>
           <div
             className="absolute top-1/2 left-0 h-1 -translate-y-1/2 z-0 transition-all duration-300"
-            style={{ 
+            style={{
               width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
               backgroundColor: 'var(--color-primary)'
             }}
@@ -430,11 +427,10 @@ const Distribution = () => {
           {[1, 2, 3, 4, 5].map((step) => (
             <div key={step} className="z-10">
               <div
-                className={`relative flex items-center justify-center w-12 h-12 rounded-full text-sm font-medium transition-all ${
-                  currentStep >= step
+                className={`relative flex items-center justify-center w-12 h-12 rounded-full text-sm font-medium transition-all ${currentStep >= step
                     ? "shadow-md"
                     : "border-2"
-                }`}
+                  }`}
                 style={{
                   backgroundColor: currentStep >= step
                     ? 'var(--color-primary)'
@@ -448,7 +444,7 @@ const Distribution = () => {
                 }}
               >
                 {step}
-                <span 
+                <span
                   className="absolute -bottom-8 text-xs font-medium whitespace-nowrap text-center"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
@@ -506,36 +502,36 @@ const Distribution = () => {
   }
 
   return (
-    <div 
+    <div
       className="h-full md:py-12 my-13"
-      style={{ 
+      style={{
         ...darkModeStyles,
-        backgroundColor: 'var(--color-bg-secondary)' 
+        backgroundColor: 'var(--color-bg-secondary)'
       }}
     >
-      <Navbar name='distribution'/>
-      <div 
+      <Navbar name='distribution' />
+      <div
         className="max-w-3xl mx-auto rounded-xl md:rounded-2xl shadow-lg overflow-hidden"
-        style={{ 
+        style={{
           backgroundColor: 'var(--color-bg-primary)',
           border: '1px solid var(--color-border)'
         }}
       >
-        <div 
+        <div
           className="p-4 md:p-8"
-          style={{ 
+          style={{
             background: `linear-gradient(to right, var(--color-primary)/20, var(--color-bg-primary))`,
             borderBottom: '1px solid var(--color-border)'
           }}
         >
-          <h1 
+          <h1
             className="text-2xl md:text-3xl font-bold flex items-center"
             style={{ color: 'var(--color-text-primary)' }}
           >
             <Music className="mr-3 md:mr-4" style={{ color: 'var(--color-primary)' }} size={24} />
             Music Distribution
           </h1>
-          <p 
+          <p
             className="mt-1 md:mt-2 text-sm md:text-base"
             style={{ color: 'var(--color-text-secondary)' }}
           >
@@ -581,7 +577,7 @@ const Distribution = () => {
                     type="button"
                     onClick={goToPrevStep}
                     className="px-4 md:px-6 py-2.5 md:py-3 flex items-center gap-1 md:gap-2 transition-colors text-sm md:text-base rounded-lg"
-                    style={{ 
+                    style={{
                       color: 'var(--color-text-secondary)',
                       backgroundColor: 'var(--color-bg-secondary)'
                     }}
@@ -603,7 +599,7 @@ const Distribution = () => {
                     type="button"
                     onClick={goToNextStep}
                     className="px-5 md:px-8 py-2.5 md:py-3 rounded-lg transition-colors flex items-center gap-1 md:gap-2 shadow-md text-sm md:text-base"
-                    style={{ 
+                    style={{
                       backgroundColor: 'var(--color-primary)',
                       color: 'var(--color-text-on-primary)'
                     }}
@@ -621,7 +617,7 @@ const Distribution = () => {
                     type="submit"
                     disabled={submissionLoading}
                     className="px-5 md:px-8 py-2.5 md:py-3 rounded-lg transition-colors flex items-center gap-1 md:gap-2 shadow-md disabled:opacity-50 text-sm md:text-base"
-                    style={{ 
+                    style={{
                       backgroundColor: submissionLoading ? 'var(--color-border)' : 'var(--color-primary)',
                       color: 'var(--color-text-on-primary)'
                     }}
